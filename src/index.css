@@ -1,0 +1,133 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@400;700&display=swap');
+@import "tailwindcss";
+
+:root {
+  --wine-primary: #8B1A1A;
+  --wine-accent: #C0392B;
+  --wine-light: #F5E6E6;
+  --whisky-primary: #B8860B;
+  --whisky-accent: #D4A017;
+  --whisky-light: #FDF5DC;
+  --beer-primary: #E67E22;
+  --beer-accent: #F39C12;
+  --beer-light: #FEF0D9;
+  --coffee-primary: #4A2C2A;
+  --coffee-accent: #795548;
+  --coffee-light: #EFEBE9;
+  --tea-primary: #2E7D32;
+  --tea-accent: #4CAF50;
+  --tea-light: #E8F5E9;
+  --bg-dark: #0D0D0F;
+  --bg-card: #161618;
+  --bg-border: #2A2A2E;
+  --text-primary: #F0EDE8;
+  --text-secondary: #9A948C;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  background-color: var(--bg-dark);
+  color: var(--text-primary);
+  overflow-x: hidden;
+}
+
+h1, h2, h3 {
+  font-family: 'Playfair Display', serif;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg-dark);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--bg-border);
+  border-radius: 3px;
+}
+
+.glass-card {
+  background: rgba(22, 22, 24, 0.85);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--bg-border);
+  border-radius: 16px;
+}
+
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+  outline: none;
+}
+
+.btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+}
+
+input, textarea, select {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--bg-border);
+  border-radius: 10px;
+  color: var(--text-primary);
+  padding: 10px 14px;
+  font-size: 14px;
+  font-family: 'Inter', sans-serif;
+  width: 100%;
+  transition: border-color 0.2s;
+  outline: none;
+}
+
+input:focus, textarea:focus, select:focus {
+  border-color: rgba(255,255,255,0.3);
+}
+
+input[type="checkbox"] {
+  width: auto;
+}
+
+label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  display: block;
+  margin-bottom: 6px;
+}
+
+select option {
+  background: #1a1a1e;
+  color: var(--text-primary);
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease forwards;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.shimmer {
+  background: linear-gradient(90deg, #1e1e22 25%, #2a2a2e 50%, #1e1e22 75%);
+  background-size: 400% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+  0%   { background-position: 100% 0; }
+  100% { background-position: -100% 0; }
+}
