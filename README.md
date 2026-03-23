@@ -1,73 +1,46 @@
-# React + TypeScript + Vite
+# 🍷 Cave136 — Carnet de Dégustation Multi-Boissons
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Cave136 est une application web complète de gestion de caves et de carnets de dégustation pour **Vin, Whisky, Bière, Café et Thé**.
 
-Currently, two official plugins are available:
+## Stack
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- **Frontend** : React + TypeScript + Vite + Tailwind CSS
+- **Backend / Auth / DB** : Supabase (PostgreSQL + Auth)
+- **Déploiement** : Netlify
+- **Cartes interactives** : react-simple-maps + d3-scale
 
-## React Compiler
+## Fonctionnalités
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- 🔐 Authentification Supabase sécurisée
+- 🍷 Cave à Vin : double notation, double ressenti, cépage, millésime, bio, accords mets/vins
+- 🥃 Cave à Whisky : distillerie, âge, fût, tourbe
+- 🍺 Cave à Bière : style, brasserie, IBU, degré d'alcool
+- ☕ Cave à Café : origine, torréfacteur, méthode d'extraction
+- 🍵 Cave à Thé : type, infusion, température
+- 🔍 Filtres avancés : pays, note, prix, texte libre, tri
+- 🗺️ Carte de France interactive (heatmap régions)
+- 🌍 Carte du Monde interactive (heatmap pays)
 
-## Expanding the ESLint configuration
+## Démarrage rapide
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm install --legacy-peer-deps
+cp .env.example .env
+# Remplir VITE_SUPABASE_URL et VITE_SUPABASE_ANON_KEY dans .env
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Configuration Supabase
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+1. Créer un projet sur [supabase.com](https://supabase.com)
+2. Copier l'URL et la clé anon dans `.env`
+3. Exécuter `supabase/schema.sql` dans le SQL Editor
+4. Créer l'utilisateur de test dans Authentication → Users :
+   - Email : `funfact1806@gmail.com` / Password : `Usertest1234!`
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+## Déploiement Netlify
+
+Le fichier `netlify.toml` est déjà configuré. Il suffit de :
+1. Lier le repo GitHub à Netlify
+2. Ajouter les variables d'environnement `VITE_SUPABASE_URL` et `VITE_SUPABASE_ANON_KEY`
+3. Déployer !

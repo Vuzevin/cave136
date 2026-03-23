@@ -131,3 +131,46 @@ select option {
   0%   { background-position: 100% 0; }
   100% { background-position: -100% 0; }
 }
+
+/* ============== Mobile Responsive ============== */
+@media (max-width: 768px) {
+  /* Sidebar becomes horizontal top bar */
+  .sidebar-desktop { display: none; }
+
+  /* Main content takes full width */
+  body > #root > div {
+    flex-direction: column;
+  }
+
+  /* Card grids go single column on very small screens */
+  .beverage-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Modal becomes full screen on mobile */
+  .modal-container {
+    align-items: flex-end;
+    padding: 0;
+  }
+  .modal-container > div {
+    max-height: 95vh;
+    border-radius: 24px 24px 0 0;
+    max-width: 100%;
+  }
+
+  /* Page padding reduced */
+  .page-content {
+    padding: 16px 16px !important;
+  }
+
+  /* Filter bar stacks vertically */
+  .filter-bar {
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 480px) {
+  h1 { font-size: 24px !important; }
+  h2 { font-size: 18px !important; }
+}
+
