@@ -165,6 +165,69 @@ export default function AddItemModal({ category, initialData, onSave, onClose }:
             )}
           </div>
 
+          {/* Category-Specific Advanced Fields */}
+          <div style={{ 
+            marginTop: '24px', 
+            paddingTop: '24px', 
+            borderTop: '1px solid #2A2A2E',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '16px'
+          }}>
+            <h4 style={{ fontSize: '13px', color: '#9A948C', textTransform: 'uppercase', letterSpacing: '1px', margin: 0 }}>Détails Spécifiques</h4>
+            
+            {category === 'wine' && (
+              <>
+                <div style={twoCol}>
+                  <div style={rowStyle}>
+                    <label>Appellation</label>
+                    <input value={(attrs.appellation as string) || ''} onChange={e => updateAttr('appellation', e.target.value)} placeholder="Ex: Pomerol" />
+                  </div>
+                  <div style={rowStyle}>
+                    <label>Cépage</label>
+                    <input value={(attrs.grape as string) || ''} onChange={e => updateAttr('grape', e.target.value)} placeholder="Ex: Merlot" />
+                  </div>
+                </div>
+                <div style={rowStyle}>
+                  <label>Terroir / Parcelle</label>
+                  <input value={(attrs.terroir as string) || ''} onChange={e => updateAttr('terroir', e.target.value)} placeholder="Ex: Argiles bleues" />
+                </div>
+              </>
+            )}
+
+            {category === 'whisky' && (
+              <>
+                <div style={twoCol}>
+                  <div style={rowStyle}>
+                    <label>Distillerie</label>
+                    <input value={(attrs.distillery as string) || ''} onChange={e => updateAttr('distillery', e.target.value)} placeholder="Ex: Ardbeg" />
+                  </div>
+                  <div style={rowStyle}>
+                    <label>Âge</label>
+                    <input type="number" value={(attrs.age as number) || ''} onChange={e => updateAttr('age', Number(e.target.value))} placeholder="10" />
+                  </div>
+                </div>
+                <div style={rowStyle}>
+                  <label>Type de fût</label>
+                  <input value={(attrs.cask_type as string) || ''} onChange={e => updateAttr('cask_type', e.target.value)} placeholder="Ex: Bourbon Cask" />
+                </div>
+              </>
+            )}
+
+            {category === 'beer' && (
+              <div style={twoCol}>
+                <div style={rowStyle}>
+                  <label>Style</label>
+                  <input value={(attrs.style as string) || ''} onChange={e => updateAttr('style', e.target.value)} placeholder="Ex: IPA" />
+                </div>
+                <div style={rowStyle}>
+                  <label>IBU (Amertume)</label>
+                  <input type="number" value={(attrs.ibu as number) || ''} onChange={e => updateAttr('ibu', Number(e.target.value))} placeholder="45" />
+                </div>
+              </div>
+            )}
+          </div>
+
           <div style={rowStyle}>
             <label>Note générale</label>
             <RatingStars value={form.rating_general} onChange={v => setForm(f => ({ ...f, rating_general: v }))} icon={config.ratingIcon} />

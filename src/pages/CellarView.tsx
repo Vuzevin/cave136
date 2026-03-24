@@ -4,7 +4,9 @@ import { CATEGORY_CONFIG } from '../types';
 import { useBeverages } from '../context/BeverageContext';
 import BeverageCard from '../components/BeverageCard';
 import AddItemModal from '../components/AddItemModal';
-import { Plus, Search, Filter } from 'lucide-react';
+import CategorySummary from '../components/CategorySummary';
+import ExportButton from '../components/ExportButton';
+import { Plus, Search, Filter, BookOpen, ArrowUpDown } from 'lucide-react';
 
 interface CellarViewProps {
   category: CategoryType;
@@ -12,15 +14,19 @@ interface CellarViewProps {
   setSubView: (v: SubView) => void;
 }
 
+type SortOption = 'newest' | 'price-asc' | 'price-desc' | 'rating';
+
 export default function CellarView({ category, subView, setSubView }: CellarViewProps) {
   const { items, loading, addItem, updateItem, deleteItem } = useBeverages();
   const [showModal, setShowModal] = useState(false);
   const [editingItem, setEditingItem] = useState<BaseFields | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [isJournalMode, setIsJournalMode] = useState(false);
+  const [sortBy, setSortBy] = useState<SortOption>('newest');
 
   const config = CATEGORY_CONFIG[category];
   
-  // Filter items by category and subview (cave vs tasting)
+  // Filter and Sort items
   const filtered = useMemo(() => {
     let result = items.filter(i => i.category === category);
     
@@ -38,9 +44,17 @@ export default function CellarView({ category, subView, setSubView }: CellarView
         i.region?.toLowerCase().includes(q)
       );
     }
+
+    // Sorting
+    result = [...result].sort((a, b) => {
+      if (sortBy === 'price-asc') return (a.price || 0) - (b.price || 0);
+      if (sortBy === 'price-desc') return (b.price || 0) - (a.price || 0);
+      if (sortBy === 'rating') return (b.rating_general || 0) - (a.rating_general || 0);
+      return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime();
+    });
     
     return result;
-  }, [items, category, subView, searchTerm]);
+  }, [items, category, subView, searchTerm, sortBy]);
 
   // Stats calculation
   const stats = useMemo(() => {
@@ -66,7 +80,6 @@ export default function CellarView({ category, subView, setSubView }: CellarView
       await addItem(item);
     }
   }
-
 
   return (
     <div className="animate-fade-in" style={{ paddingBottom: '80px' }}>
@@ -146,7 +159,7 @@ export default function CellarView({ category, subView, setSubView }: CellarView
             <h2 style={{ fontSize: '24px', margin: 0 }}>{subView === 'cave' ? config.caveLabel : config.tastingLabel}</h2>
           </div>
 
-          <div style={{ display: 'flex', gap: '12px' }}>
+          <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
             <div style={{ 
               display: 'flex', 
               background: '#FFFFFF', 
@@ -184,112 +197,88 @@ export default function CellarView({ category, subView, setSubView }: CellarView
               >
                 Dégustations
               </button>
+            </div>
+
+            {subView === 'tastings' && (
               <button 
-                onClick={() => setSubView('map')}
+                onClick={() => setIsJournalMode(!isJournalMode)}
                 style={{
                   padding: '8px 16px',
-                  borderRadius: '8px',
-                  border: 'none',
-                  background: 'transparent',
-                  color: 'var(--text-secondary)',
-                  fontWeight: 600,
+                  borderRadius: '12px',
+                  border: '1px solid var(--border-soft)',
+                  background: isJournalMode ? '#F5F5F7' : 'white',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
                   fontSize: '13px',
+                  fontWeight: 600,
                   cursor: 'pointer'
                 }}
               >
-                Carte
+                <BookOpen size={16} />
+                {isJournalMode ? 'Vue Grille' : 'Mode Journal'}
+              </button>
+            )}
+
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <ExportButton category={category} items={items} />
+              <button 
+                onClick={() => { setEditingItem(null); setShowModal(true); }}
+                className="btn"
+                style={{
+                  background: config.color,
+                  color: '#FFFFFF',
+                  boxShadow: `0 4px 12px ${config.color}33`
+                }}
+              >
+                <Plus size={18} />
+                Ajouter
               </button>
             </div>
-
-            <button 
-              onClick={() => { setEditingItem(null); setShowModal(true); }}
-              className="btn"
-              style={{
-                background: config.color,
-                color: '#FFFFFF',
-                boxShadow: `0 4px 12px ${config.color}33`
-              }}
-            >
-              <Plus size={18} />
-              Ajouter
-            </button>
           </div>
         </div>
 
-        {/* Dash Cards (References / Bottles / Value) */}
-        {subView === 'cave' && (
-          <div style={{ 
-            display: 'grid', 
-            gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', 
-            gap: '24px',
-            marginBottom: '40px'
-          }}>
-            <div className="card" style={{ padding: '24px', display: 'flex', alignItems: 'center', gap: '20px' }}>
-              <div style={{ 
-                width: '48px', height: '48px', borderRadius: '12px', 
-                backgroundColor: config.light, display: 'flex', 
-                alignItems: 'center', justifyContent: 'center' 
-              }}>
-                <span style={{ fontSize: '20px' }}>🍷</span>
-              </div>
-              <div>
-                <span style={{ fontSize: '13px', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1px' }}>RÉFÉRENCES</span>
-                <div style={{ fontSize: '24px', fontWeight: 700 }}>{stats.references}</div>
-              </div>
-            </div>
-            <div className="card" style={{ padding: '24px', display: 'flex', alignItems: 'center', gap: '20px' }}>
-              <div style={{ 
-                width: '48px', height: '48px', borderRadius: '12px', 
-                backgroundColor: '#FFF8E6', display: 'flex', 
-                alignItems: 'center', justifyContent: 'center' 
-              }}>
-                <span style={{ fontSize: '20px' }}>📦</span>
-              </div>
-              <div>
-                <span style={{ fontSize: '13px', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1px' }}>Bouteilles</span>
-                <div style={{ fontSize: '24px', fontWeight: 700 }}>{stats.bottles}</div>
-                <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>≈ {stats.value} €</div>
-              </div>
-            </div>
-            <div className="card" style={{ padding: '24px', display: 'flex', alignItems: 'center', gap: '20px' }}>
-              <div style={{ 
-                width: '48px', height: '48px', borderRadius: '12px', 
-                backgroundColor: '#E6F9F0', display: 'flex', 
-                alignItems: 'center', justifyContent: 'center' 
-              }}>
-                <span style={{ fontSize: '20px' }}>💎</span>
-              </div>
-              <div>
-                <span style={{ fontSize: '13px', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1px' }}>Valeur Estimée</span>
-                <div style={{ fontSize: '24px', fontWeight: 700 }}>{stats.value} €</div>
-              </div>
-            </div>
-          </div>
-        )}
+        {/* Stats Dashboard */}
+        {subView === 'cave' && <CategorySummary category={category} items={items} />}
 
-        {/* Search & Filter Bar */}
-        <div className="card" style={{ padding: '16px', marginBottom: '32px', display: 'flex', gap: '16px' }}>
+        {/* Search & Sort Bar */}
+        <div className="card" style={{ padding: '12px 16px', marginBottom: '32px', display: 'flex', gap: '16px', alignItems: 'center' }}>
           <div style={{ position: 'relative', flex: 1 }}>
             <Search size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
             <input 
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
-              placeholder="Rechercher un nom, un pays, une région..."
-              style={{ paddingLeft: '40px', border: 'none', background: '#F9F9F9' }}
+              placeholder="Rechercher par nom, pays, région..."
+              style={{ paddingLeft: '40px', border: 'none', background: '#F9F9F9', width: '100%', height: '40px' }}
             />
           </div>
+          
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <ArrowUpDown size={16} style={{ color: 'var(--text-muted)' }} />
+            <select 
+              value={sortBy} 
+              onChange={e => setSortBy(e.target.value as SortOption)}
+              style={{ border: 'none', background: 'none', fontWeight: 600, color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '13px' }}
+            >
+              <option value="newest">Plus récent</option>
+              <option value="rating">Mieux notés</option>
+              <option value="price-asc">Prix croissant</option>
+              <option value="price-desc">Prix décroissant</option>
+            </select>
+          </div>
+
           <button style={{ 
             background: 'none', border: '1px solid var(--border-soft)', 
-            borderRadius: '10px', padding: '0 16px', display: 'flex', 
+            borderRadius: '10px', padding: '0 16px', height: '40px', display: 'flex', 
             alignItems: 'center', gap: '8px', cursor: 'pointer',
             color: 'var(--text-secondary)', fontWeight: 600
           }}>
             <Filter size={16} />
-            Filtres
+            Plus de filtres
           </button>
         </div>
 
-        {/* Content Grid */}
+        {/* Content */}
         {loading ? (
           <div className="beverage-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '24px' }}>
             {[1,2,3,4].map(i => (
@@ -297,10 +286,78 @@ export default function CellarView({ category, subView, setSubView }: CellarView
             ))}
           </div>
         ) : filtered.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '100px 0', color: 'var(--text-secondary)' }}>
-            <div style={{ fontSize: '64px', marginBottom: '20px' }}>{config.emoji}</div>
-            <h3 style={{ fontSize: '24px', color: 'var(--text-primary)', marginBottom: '12px' }}>C'est bien vide ici...</h3>
-            <p>Ajoutez votre premier item en cliquant sur le bouton en haut à droite.</p>
+          <div className="glass-card animate-fade-in" style={{ 
+            textAlign: 'center', 
+            padding: '80px 24px', 
+            borderRadius: '24px',
+            borderStyle: 'dashed',
+            borderWidth: '2px'
+          }}>
+            <div style={{ fontSize: '80px', marginBottom: '24px', filter: 'grayscale(0.5)' }}>
+              {subView === 'cave' ? '📦' : '🖋️'}
+            </div>
+            <h3 style={{ fontSize: '28px', color: 'var(--text-primary)', marginBottom: '16px' }}>
+              {searchTerm ? 'Aucun résultat trouvé' : `Votre ${subView === 'cave' ? 'cave' : 'journal'} est vide`}
+            </h3>
+            <p style={{ color: 'var(--text-secondary)', maxWidth: '400px', margin: '0 auto 32px auto', fontSize: '16px' }}>
+              {searchTerm 
+                ? "Essayez d'ajuster vos filtres ou votre recherche pour trouver ce que vous cherchez." 
+                : `Commencez à documenter votre passion en ajoutant votre premier ${config.label}.`}
+            </p>
+            {!searchTerm && (
+              <button 
+                onClick={() => setShowModal(true)}
+                style={{ 
+                  padding: '12px 32px', borderRadius: '100px', background: config.color, 
+                  color: 'white', border: 'none', fontWeight: 700, cursor: 'pointer',
+                  boxShadow: `0 8px 16px ${config.color}33`
+                }}
+              >
+                Ajouter maintenant
+              </button>
+            )}
+          </div>
+        ) : isJournalMode ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '32px', maxWidth: '800px', margin: '0 auto' }}>
+            {filtered.map(item => (
+              <div key={item.id} className="journal-view stagger-item">
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                  <div>
+                    <h3 className="journal-title" style={{ fontSize: '28px', margin: 0 }}>{item.name}</h3>
+                    <p style={{ color: 'var(--text-secondary)', fontSize: '14px', marginTop: '4px' }}>
+                      {item.region}, {item.country} • {new Date(item.created_at || '').toLocaleDateString('fr-FR')}
+                    </p>
+                  </div>
+                  <div style={{ fontSize: '24px' }}>{config.emoji}</div>
+                </div>
+                
+                <div className="journal-divider" />
+                
+                <p style={{ fontSize: '18px', lineHeight: 1.6, color: '#4A4A4A', fontStyle: 'italic' }}>
+                  "{item.notes || 'Pas de notes pour cette dégustation.'}"
+                </p>
+
+                <div style={{ marginTop: '24px', display: 'flex', gap: '16px' }}>
+                  {item.rating_general > 0 && (
+                    <div style={{ background: '#F5F1EC', padding: '12px 20px', borderRadius: '12px' }}>
+                      <span style={{ fontSize: '12px', color: '#9A948C', textTransform: 'uppercase', display: 'block', marginBottom: '4px' }}>Note</span>
+                      <span style={{ fontSize: '20px', fontWeight: 700 }}>{item.rating_general}/5</span>
+                    </div>
+                  )}
+                  {item.price && (
+                    <div style={{ background: '#F5F1EC', padding: '12px 20px', borderRadius: '12px' }}>
+                      <span style={{ fontSize: '12px', color: '#9A948C', textTransform: 'uppercase', display: 'block', marginBottom: '4px' }}>Prix</span>
+                      <span style={{ fontSize: '20px', fontWeight: 700 }}>{item.price}€</span>
+                    </div>
+                  )}
+                </div>
+
+                <div style={{ marginTop: '24px', display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
+                  <button onClick={() => { setEditingItem(item); setShowModal(true); }} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '13px' }}>Modifier</button>
+                  <button onClick={() => deleteItem(item.id!)} style={{ background: 'none', border: 'none', color: '#E53E3E', cursor: 'pointer', fontSize: '13px' }}>Supprimer</button>
+                </div>
+              </div>
+            ))}
           </div>
         ) : (
           <div className="beverage-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '24px' }}>

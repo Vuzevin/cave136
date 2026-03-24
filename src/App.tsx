@@ -5,17 +5,96 @@ import type { CategoryType, SubView } from './types';
 import CellarView from './pages/CellarView';
 import FranceMapPage from './pages/FranceMapPage';
 import WorldMapPage from './pages/WorldMapPage';
-import { Menu, X } from 'lucide-react';
+import { Menu, X, ChevronLeft, LayoutGrid } from 'lucide-react';
+
+function CategoryHub({ onSelect }: { onSelect: (cat: CategoryType) => void }) {
+  const categories: CategoryType[] = ['wine', 'whisky', 'beer', 'coffee', 'tea'];
+
+  return (
+    <div className="animate-fade-in" style={{ 
+      minHeight: '100vh', 
+      background: '#F5F1EC', 
+      padding: '40px 24px 100px 24px' 
+    }}>
+      <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+        <header style={{ textAlign: 'center', marginBottom: '60px' }}>
+          <span style={{ fontSize: '48px', marginBottom: '16px', display: 'block' }}>🍷</span>
+          <h1 style={{ fontSize: '56px', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '16px', letterSpacing: '-2px' }}>
+            Ma Reserve Personnelle
+          </h1>
+          <p style={{ fontSize: '20px', color: 'var(--text-secondary)', maxWidth: '600px', margin: '0 auto' }}>
+            Gérez vos caves et carnets de dégustation avec élégance. Sélectionnez un univers pour commencer.
+          </p>
+        </header>
+
+        <div style={{ 
+          display: 'grid', 
+          gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', 
+          gap: '24px' 
+        }}>
+          {categories.map((cat, idx) => {
+            const config = CATEGORY_CONFIG[cat];
+            return (
+              <div 
+                key={cat} 
+                className="hub-card stagger-item" 
+                style={{ animationDelay: `${idx * 0.1}s` }}
+                onClick={() => onSelect(cat)}
+              >
+                <img src={config.heroImage} alt={config.label} />
+                <div className="hub-card-content">
+                  <div style={{ fontSize: '40px', marginBottom: '12px' }}>{config.emoji}</div>
+                  <h2 style={{ fontSize: '32px', margin: 0, fontWeight: 700 }}>{config.label}</h2>
+                  <p style={{ opacity: 0.8, fontSize: '16px' }}>{config.heroTitle}</p>
+                  
+                  <div style={{ 
+                    marginTop: '24px', 
+                    display: 'inline-flex', 
+                    alignItems: 'center', 
+                    gap: '8px',
+                    padding: '8px 16px',
+                    background: 'rgba(255,255,255,0.2)',
+                    backdropFilter: 'blur(8px)',
+                    borderRadius: '100px',
+                    fontSize: '14px',
+                    fontWeight: 600
+                  }}>
+                    Entrer dans l'univers <ChevronLeft size={16} style={{ transform: 'rotate(180deg)' }} />
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      <footer style={{ 
+        position: 'fixed', 
+        bottom: '24px', 
+        left: '50%', 
+        transform: 'translateX(-50%)',
+        opacity: 0.5,
+        fontSize: '12px'
+      }}>
+        Cave136 v2.0 • Premium Beverage Management
+      </footer>
+    </div>
+  );
+}
 
 function AppContent() {
-  const [activeCategory, setActiveCategory] = useState<CategoryType>('wine');
+  const [activeCategory, setActiveCategory] = useState<CategoryType | null>(null);
   const [activeSubView, setActiveSubView] = useState<SubView>('cave');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const categories: CategoryType[] = ['wine', 'whisky', 'beer', 'coffee', 'tea'];
 
+  if (!activeCategory) {
+    return <CategoryHub onSelect={(cat) => setActiveCategory(cat)} />;
+  }
+
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: '#F5F1EC' }}>
       {/* Top Navigation */}
       <header style={{
         backgroundColor: '#FFFFFF',
@@ -29,14 +108,33 @@ function AppContent() {
         alignItems: 'center',
         justifyContent: 'space-between'
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '32px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
+          <button 
+            onClick={() => setActiveCategory(null)}
+            style={{ 
+              background: 'none', 
+              border: 'none', 
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              color: 'var(--text-secondary)',
+              fontWeight: 600,
+              fontSize: '14px'
+            }}
+          >
+            <LayoutGrid size={18} />
+            <span className="desktop-only">Hub</span>
+          </button>
+
+          <div style={{ width: '1px', height: '24px', background: 'var(--border-soft)' }} />
+
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <span style={{ fontSize: '24px' }}>🍷</span>
-            <h1 style={{ fontSize: '22px', margin: 0, color: 'var(--text-primary)' }}>Cave136</h1>
+            <h1 style={{ fontSize: '18px', margin: 0, color: 'var(--text-primary)', fontWeight: 800 }}>Cave136</h1>
           </div>
 
           {/* Desktop Category Tabs */}
-          <nav className="desktop-only" style={{ display: 'flex', gap: '8px' }}>
+          <nav className="desktop-only" style={{ display: 'flex', gap: '4px', marginLeft: '12px' }}>
             {categories.map(cat => {
               const config = CATEGORY_CONFIG[cat];
               const isActive = activeCategory === cat;
@@ -48,13 +146,13 @@ function AppContent() {
                     setActiveSubView('cave');
                   }}
                   style={{
-                    padding: '8px 16px',
+                    padding: '6px 14px',
                     borderRadius: '100px',
                     border: 'none',
                     background: isActive ? config.bg : 'transparent',
                     color: isActive ? config.color : 'var(--text-secondary)',
                     fontWeight: 600,
-                    fontSize: '14px',
+                    fontSize: '13px',
                     cursor: 'pointer',
                     transition: 'all 0.2s',
                     display: 'flex',
@@ -62,7 +160,7 @@ function AppContent() {
                     gap: '6px'
                   }}
                 >
-                  <span>{config.emoji}</span>
+                  <span style={{ fontSize: '16px' }}>{config.emoji}</span>
                   {config.label}
                 </button>
               );
@@ -102,6 +200,13 @@ function AppContent() {
           flexDirection: 'column',
           gap: '12px'
         }}>
+          <button 
+            onClick={() => { setActiveCategory(null); setIsMobileMenuOpen(false); }}
+            style={{ padding: '16px', borderRadius: '12px', background: '#F5F5F7', border: 'none', textAlign: 'left', fontWeight: 600 }}
+          >
+            🏠 Retour au Hub global
+          </button>
+          <div style={{ height: '1px', background: '#EEE', margin: '8px 0' }} />
           {categories.map(cat => (
             <button
               key={cat}

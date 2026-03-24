@@ -21,7 +21,7 @@ export interface BaseFields {
   quantity?: number;   // nb of bottles in cave
 }
 
-export type SubView = 'cave' | 'tastings' | 'map';
+export type SubView = 'cave' | 'tastings' | 'map' | 'hub';
 
 export interface WineAttributes {
   year?: number;
@@ -29,7 +29,10 @@ export interface WineAttributes {
   peak_date?: string;
   domain?: string;
   bio?: boolean;
-  wine_type?: 'Rouge' | 'Blanc' | 'Rosé' | 'Champagne';
+  wine_type?: 'Rouge' | 'Blanc' | 'Rosé' | 'Champagne' | 'Liquoreux' | 'Pétillant';
+  appellation?: string;
+  color?: string;
+  terroir?: string;
 }
 
 export interface WhiskyAttributes {
@@ -37,6 +40,9 @@ export interface WhiskyAttributes {
   distillery?: string;
   cask_type?: string;
   peat_level?: string;
+  region?: string;
+  bottler?: string;
+  strength?: number; // abv
 }
 
 export interface BeerAttributes {
