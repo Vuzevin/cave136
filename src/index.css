@@ -1,27 +1,47 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@400;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap');
 @import "tailwindcss";
 
 :root {
+  /* Light theme base */
+  --bg-page:    #F5F1EC;
+  --bg-card:    #FFFFFF;
+  --bg-card-hover: #FDFAF7;
+  --border:     #E8E2DA;
+  --border-soft: #F0EBE3;
+  --text-primary: #1A1209;
+  --text-secondary: #7A6F65;
+  --text-muted:   #A89F97;
+
+  /* Category colors */
   --wine-primary: #8B1A1A;
-  --wine-accent: #C0392B;
-  --wine-light: #F5E6E6;
-  --whisky-primary: #B8860B;
-  --whisky-accent: #D4A017;
-  --whisky-light: #FDF5DC;
-  --beer-primary: #E67E22;
-  --beer-accent: #F39C12;
-  --beer-light: #FEF0D9;
-  --coffee-primary: #4A2C2A;
-  --coffee-accent: #795548;
-  --coffee-light: #EFEBE9;
-  --tea-primary: #2E7D32;
-  --tea-accent: #4CAF50;
-  --tea-light: #E8F5E9;
-  --bg-dark: #0D0D0F;
-  --bg-card: #161618;
-  --bg-border: #2A2A2E;
-  --text-primary: #F0EDE8;
-  --text-secondary: #9A948C;
+  --wine-accent:  #C0392B;
+  --wine-light:   #FDF0EE;
+  --wine-soft:    #F5E6E4;
+  --wine-bg:      rgba(139,26,26,0.08);
+
+  --whisky-primary: #92650A;
+  --whisky-accent:  #D4960A;
+  --whisky-light:   #FDF8EC;
+  --whisky-soft:    #FAF0D3;
+  --whisky-bg:      rgba(146,101,10,0.08);
+
+  --beer-primary: #C0550A;
+  --beer-accent:  #E8820A;
+  --beer-light:   #FDF4EC;
+  --beer-soft:    #FAEBD5;
+  --beer-bg:      rgba(192,85,10,0.08);
+
+  --coffee-primary: #3D2314;
+  --coffee-accent:  #6B4226;
+  --coffee-light:   #F5EDE8;
+  --coffee-soft:    #EDE0D8;
+  --coffee-bg:      rgba(61,35,20,0.08);
+
+  --tea-primary:  #1A5732;
+  --tea-accent:   #2E8B57;
+  --tea-light:    #EAF5EE;
+  --tea-soft:     #D4EDDE;
+  --tea-bg:       rgba(26,87,50,0.08);
 }
 
 * {
@@ -32,57 +52,47 @@
 
 body {
   font-family: 'Inter', sans-serif;
-  background-color: var(--bg-dark);
+  background-color: var(--bg-page);
   color: var(--text-primary);
   overflow-x: hidden;
+  min-height: 100vh;
 }
 
 h1, h2, h3 {
   font-family: 'Playfair Display', serif;
 }
 
-::-webkit-scrollbar {
-  width: 6px;
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--bg-page); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+/* Cards */
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-soft);
+  border-radius: 18px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  transition: box-shadow 0.2s, transform 0.2s;
 }
-::-webkit-scrollbar-track {
-  background: var(--bg-dark);
-}
-::-webkit-scrollbar-thumb {
-  background: var(--bg-border);
-  border-radius: 3px;
+.card:hover {
+  box-shadow: 0 6px 24px rgba(0,0,0,0.08);
 }
 
+/* Modal dark overlay */
 .glass-card {
-  background: rgba(22, 22, 24, 0.85);
-  backdrop-filter: blur(12px);
-  border: 1px solid var(--bg-border);
-  border-radius: 16px;
+  background: #1C1C1E;
+  border: 1px solid #2A2A2E;
+  border-radius: 18px;
 }
 
-.btn-primary {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 20px;
+/* Inputs dark (inside modals) */
+.modal-form input,
+.modal-form textarea,
+.modal-form select {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid #2A2A2E;
   border-radius: 10px;
-  font-weight: 600;
-  font-size: 14px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  border: none;
-  outline: none;
-}
-
-.btn-primary:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
-}
-
-input, textarea, select {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid var(--bg-border);
-  border-radius: 10px;
-  color: var(--text-primary);
+  color: #F0EDE8;
   padding: 10px 14px;
   font-size: 14px;
   font-family: 'Inter', sans-serif;
@@ -90,87 +100,76 @@ input, textarea, select {
   transition: border-color 0.2s;
   outline: none;
 }
-
-input:focus, textarea:focus, select:focus {
+.modal-form input:focus,
+.modal-form textarea:focus,
+.modal-form select:focus {
   border-color: rgba(255,255,255,0.3);
 }
-
-input[type="checkbox"] {
-  width: auto;
-}
-
-label {
+.modal-form label {
   font-size: 13px;
   font-weight: 500;
-  color: var(--text-secondary);
+  color: #9A948C;
   display: block;
   margin-bottom: 6px;
 }
+.modal-form select option { background: #1a1a1e; color: #F0EDE8; }
+.modal-form input[type="checkbox"] { width: auto; }
 
-select option {
-  background: #1a1a1e;
-  color: var(--text-primary);
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+  outline: none;
+  font-family: 'Inter', sans-serif;
+}
+.btn:hover { transform: translateY(-1px); }
+
+/* Section title style (red left bar) */
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+.section-title::before {
+  content: '';
+  display: block;
+  width: 4px;
+  height: 28px;
+  border-radius: 2px;
+  flex-shrink: 0;
 }
 
-.animate-fade-in {
-  animation: fadeIn 0.3s ease forwards;
-}
-
+/* Animations */
+.animate-fade-in { animation: fadeIn 0.3s ease forwards; }
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(10px); }
   to   { opacity: 1; transform: translateY(0); }
 }
 
 .shimmer {
-  background: linear-gradient(90deg, #1e1e22 25%, #2a2a2e 50%, #1e1e22 75%);
+  background: linear-gradient(90deg, #F0EBE4 25%, #EBE4DC 50%, #F0EBE4 75%);
   background-size: 400% 100%;
   animation: shimmer 1.5s infinite;
 }
-
 @keyframes shimmer {
   0%   { background-position: 100% 0; }
   100% { background-position: -100% 0; }
 }
 
-/* ============== Mobile Responsive ============== */
+/* Mobile */
 @media (max-width: 768px) {
-  /* Sidebar becomes horizontal top bar */
-  .sidebar-desktop { display: none; }
-
-  /* Main content takes full width */
-  body > #root > div {
-    flex-direction: column;
-  }
-
-  /* Card grids go single column on very small screens */
-  .beverage-grid {
-    grid-template-columns: 1fr !important;
-  }
-
-  /* Modal becomes full screen on mobile */
-  .modal-container {
-    align-items: flex-end;
-    padding: 0;
-  }
-  .modal-container > div {
-    max-height: 95vh;
-    border-radius: 24px 24px 0 0;
-    max-width: 100%;
-  }
-
-  /* Page padding reduced */
-  .page-content {
-    padding: 16px 16px !important;
-  }
-
-  /* Filter bar stacks vertically */
-  .filter-bar {
-    flex-direction: column;
-  }
+  .beverage-grid { grid-template-columns: 1fr 1fr !important; }
 }
-
 @media (max-width: 480px) {
-  h1 { font-size: 24px !important; }
-  h2 { font-size: 18px !important; }
+  .beverage-grid { grid-template-columns: 1fr !important; }
+  h1 { font-size: 26px !important; }
 }
-

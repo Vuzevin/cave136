@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
-import type { BaseFields, CategoryType } from '../types';
+import type { BaseFields } from '../types';
 
 interface BeverageContextType {
   items: BaseFields[];
@@ -8,19 +8,7 @@ interface BeverageContextType {
   addItem: (item: Omit<BaseFields, 'id' | 'user_id' | 'created_at'>) => Promise<void>;
   updateItem: (id: string, item: Partial<BaseFields>) => Promise<void>;
   deleteItem: (id: string) => Promise<void>;
-  filterCategory: CategoryType | null;
-  setFilterCategory: (c: CategoryType | null) => void;
-  filters: FilterState;
-  setFilters: (f: FilterState) => void;
-}
-
-export interface FilterState {
-  country?: string;
-  minRating?: number;
-  maxPrice?: number;
-  searchText?: string;
-  sortBy?: 'created_at' | 'name' | 'rating_general' | 'price';
-  sortDir?: 'asc' | 'desc';
+  fetchItems: () => Promise<void>;
 }
 
 const BeverageContext = createContext<BeverageContextType | undefined>(undefined);
@@ -28,49 +16,43 @@ const BeverageContext = createContext<BeverageContextType | undefined>(undefined
 export function BeverageProvider({ children }: { children: React.ReactNode }) {
   const [items, setItems] = useState<BaseFields[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filterCategory, setFilterCategory] = useState<CategoryType | null>(null);
-  const [filters, setFilters] = useState<FilterState>({});
 
   useEffect(() => {
     fetchItems();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filterCategory]);
+  }, []);
 
   async function fetchItems() {
     setLoading(true);
-    let query = supabase
+    const { data, error } = await supabase
       .from('beverages')
       .select('*')
       .order('created_at', { ascending: false });
 
-    if (filterCategory) {
-      query = query.eq('category', filterCategory);
-    }
-
-    const { data, error } = await query;
     if (!error && data) setItems(data as BaseFields[]);
     setLoading(false);
   }
 
   async function addItem(item: Omit<BaseFields, 'id' | 'user_id' | 'created_at'>) {
-    await supabase.from('beverages').insert({ ...item });
-    fetchItems();
+    const { error } = await supabase.from('beverages').insert({ ...item });
+    if (!error) fetchItems();
+    else console.error('Error adding item:', error);
   }
 
   async function updateItem(id: string, item: Partial<BaseFields>) {
-    await supabase.from('beverages').update(item).eq('id', id);
-    fetchItems();
+    const { error } = await supabase.from('beverages').update(item).eq('id', id);
+    if (!error) fetchItems();
+    else console.error('Error updating item:', error);
   }
 
   async function deleteItem(id: string) {
-    await supabase.from('beverages').delete().eq('id', id);
-    fetchItems();
+    const { error } = await supabase.from('beverages').delete().eq('id', id);
+    if (!error) fetchItems();
+    else console.error('Error deleting item:', error);
   }
 
   return (
     <BeverageContext.Provider value={{
-      items, loading, addItem, updateItem, deleteItem,
-      filterCategory, setFilterCategory, filters, setFilters,
+      items, loading, addItem, updateItem, deleteItem, fetchItems
     }}>
       {children}
     </BeverageContext.Provider>

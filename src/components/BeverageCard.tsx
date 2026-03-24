@@ -1,7 +1,7 @@
 import type { BaseFields } from '../types';
 import { CATEGORY_CONFIG } from '../types';
 import RatingStars from './RatingStars';
-import { Trash2, Edit2, MapPin, DollarSign } from 'lucide-react';
+import { Trash2, Edit2, MapPin } from 'lucide-react';
 
 interface BeverageCardProps {
   item: BaseFields;
@@ -11,116 +11,160 @@ interface BeverageCardProps {
 
 export default function BeverageCard({ item, onEdit, onDelete }: BeverageCardProps) {
   const config = CATEGORY_CONFIG[item.category];
-  const attrs = item.attributes as Record<string, unknown>;
+  const attrs = item.attributes as Record<string, any>;
 
   return (
-    <div className="glass-card animate-fade-in" style={{
-      overflow: 'hidden',
-      transition: 'transform 0.2s, box-shadow 0.2s',
-    }}
-      onMouseEnter={e => {
-        (e.currentTarget as HTMLElement).style.transform = 'translateY(-4px)';
-        (e.currentTarget as HTMLElement).style.boxShadow = `0 16px 40px ${config.color}33`;
-      }}
-      onMouseLeave={e => {
-        (e.currentTarget as HTMLElement).style.transform = 'translateY(0)';
-        (e.currentTarget as HTMLElement).style.boxShadow = 'none';
-      }}
-    >
-      {/* Image */}
-      <div style={{
-        height: 180, background: item.image_url
-          ? `url(${item.image_url}) center/cover no-repeat`
-          : `linear-gradient(135deg, ${config.color}44, ${config.color}22)`,
-        display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative',
+    <div className="card animate-fade-in" style={{ overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+      {/* Image Area */}
+      <div style={{ 
+        height: '200px', 
+        backgroundColor: config.soft,
+        position: 'relative',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        overflow: 'hidden'
       }}>
-        {!item.image_url && (
-          <span style={{ fontSize: 56, opacity: 0.6 }}>{config.emoji}</span>
+        {item.image_url ? (
+          <img 
+            src={item.image_url} 
+            alt={item.name} 
+            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+          />
+        ) : (
+          <span style={{ fontSize: '64px' }}>{config.emoji}</span>
         )}
-        {/* Category badge */}
+
+        {/* Category-specific Badge */}
         <div style={{
-          position: 'absolute', top: 10, left: 10,
-          background: `${config.color}dd`, borderRadius: 20,
-          padding: '4px 10px', fontSize: 11, fontWeight: 700, color: 'white',
-          display: 'flex', alignItems: 'center', gap: 4,
+          position: 'absolute',
+          top: '12px',
+          left: '12px',
+          backgroundColor: '#FFFFFF',
+          padding: '6px 12px',
+          borderRadius: '100px',
+          fontSize: '11px',
+          fontWeight: 700,
+          color: config.color,
+          boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '6px'
         }}>
-          {config.emoji} {String(attrs.wine_type || attrs.style || config.label.replace('Ma Cave à ', ''))}
+          {attrs.wine_type || attrs.style || attrs.tea_type || config.label}
         </div>
-        {/* Bio badge */}
-        {Boolean(attrs.bio) && (
+
+        {/* Quantity Badge (for cave items) */}
+        {item.in_stock && (
           <div style={{
-            position: 'absolute', top: 10, right: 10,
-            background: '#2E7D32dd', borderRadius: 20,
-            padding: '4px 8px', fontSize: 11, fontWeight: 700, color: 'white',
-          }}>🌿 Bio</div>
+            position: 'absolute',
+            bottom: '12px',
+            left: '12px',
+            backgroundColor: config.color,
+            color: '#FFFFFF',
+            width: '24px',
+            height: '24px',
+            borderRadius: '6px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '12px',
+            fontWeight: 700
+          }}>
+            {item.quantity || 1}
+          </div>
         )}
-        {/* Actions */}
-        <div style={{ position: 'absolute', bottom: 10, right: 10, display: 'flex', gap: 6 }}>
-          <button onClick={() => onEdit(item)} style={{
-            width: 32, height: 32, borderRadius: 8, border: 'none', cursor: 'pointer',
-            background: 'rgba(22,22,24,0.85)', color: '#9A948C', display: 'flex',
-            alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(8px)',
-            transition: 'all 0.2s',
-          }}>
-            <Edit2 size={14} />
-          </button>
-          <button onClick={() => onDelete(item.id!)} style={{
-            width: 32, height: 32, borderRadius: 8, border: 'none', cursor: 'pointer',
-            background: 'rgba(22,22,24,0.85)', color: '#9A948C', display: 'flex',
-            alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(8px)',
-            transition: 'all 0.2s',
-          }}>
-            <Trash2 size={14} />
-          </button>
-        </div>
       </div>
 
-      {/* Content */}
-      <div style={{ padding: '16px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
-          <h3 style={{ fontSize: 16, fontWeight: 700, color: '#F0EDE8', flex: 1, marginRight: 8, lineHeight: 1.3 }}>
-            {item.name}
-          </h3>
-          {item.price !== undefined && item.price !== null && (
-            <span style={{
-              display: 'flex', alignItems: 'center', gap: 2,
-              fontSize: 13, fontWeight: 600, color: config.accent, whiteSpace: 'nowrap',
-            }}>
-              <DollarSign size={12} />{item.price}€
-            </span>
-          )}
+      {/* Content Area */}
+      <div style={{ padding: '20px', flex: 1, display: 'flex', flexDirection: 'column' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
+          <h3 style={{ fontSize: '18px', margin: 0, fontWeight: 700, lineHeight: 1.2 }}>{item.name}</h3>
+          {item.price && <span style={{ fontWeight: 700, color: config.color }}>{item.price}€</span>}
         </div>
 
-        {(item.country || item.region) && (
-          <p style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: '#9A948C', marginBottom: 10 }}>
-            <MapPin size={11} />
-            {[item.region, item.country].filter(Boolean).join(', ')}
-          </p>
-        )}
-
-        {Boolean(attrs.year) && (
-          <p style={{ fontSize: 12, color: '#9A948C', marginBottom: 8 }}>Millésime {String(attrs.year)}</p>
-        )}
-
-        <RatingStars value={item.rating_general} readonly icon={config.ratingIcon} size={16} />
-
-        {item.rating_secondary !== undefined && item.rating_secondary > 0 && (
-          <div style={{ marginTop: 4 }}>
-            <RatingStars value={item.rating_secondary} readonly icon="⭐" size={14} />
+        {(item.region || item.country) && (
+          <div style={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: '4px', 
+            fontSize: '12px', 
+            color: 'var(--text-secondary)',
+            marginBottom: '12px'
+          }}>
+            <MapPin size={12} />
+            {item.region}{item.region && item.country ? ', ' : ''}{item.country}
           </div>
         )}
 
-        {item.notes && (
-          <p style={{
-            marginTop: 10, fontSize: 12, color: '#9A948C', fontStyle: 'italic',
-            display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
-            overflow: 'hidden',
-          }}>"{item.notes}"</p>
-        )}
-      </div>
+        {/* Key Attributes Row */}
+        <div style={{ display: 'flex', gap: '12px', marginBottom: '16px', flexWrap: 'wrap' }}>
+          {attrs.year && (
+            <div style={{ fontSize: '12px', color: 'var(--text-secondary)', backgroundColor: '#F0F0F0', padding: '2px 8px', borderRadius: '4px' }}>
+              Année {attrs.year}
+            </div>
+          )}
+          {attrs.abv && (
+            <div style={{ fontSize: '12px', color: 'var(--text-secondary)', backgroundColor: '#F0F0F0', padding: '2px 8px', borderRadius: '4px' }}>
+              {attrs.abv}% alc.
+            </div>
+          )}
+        </div>
 
-      {/* Color bar */}
-      <div style={{ height: 3, background: `linear-gradient(90deg, ${config.color}, ${config.accent})` }} />
+        <div style={{ marginBottom: '16px' }}>
+          <RatingStars value={item.rating_general} readonly icon={config.ratingIcon} size={16} />
+        </div>
+
+        {item.notes && (
+          <p style={{ 
+            fontSize: '13px', 
+            color: 'var(--text-secondary)', 
+            fontStyle: 'italic',
+            display: '-webkit-box',
+            WebkitLineClamp: 2,
+            WebkitBoxOrient: 'vertical',
+            overflow: 'hidden',
+            margin: '0 0 20px 0'
+          }}>
+            "{item.notes}"
+          </p>
+        )}
+
+        {/* Footer Actions */}
+        <div style={{ 
+          marginTop: 'auto', 
+          display: 'flex', 
+          justifyContent: 'flex-end', 
+          gap: '8px',
+          paddingTop: '16px',
+          borderTop: '1px solid var(--border-soft)'
+        }}>
+          <button 
+            onClick={() => onEdit(item)}
+            className="btn-icon"
+            style={{ 
+              background: 'none', border: 'none', padding: '6px', cursor: 'pointer',
+              color: 'var(--text-muted)', borderRadius: '6px', transition: 'all 0.2s'
+            }}
+          >
+            <Edit2 size={16} />
+          </button>
+          <button 
+            onClick={() => onDelete(item.id!)}
+            className="btn-icon"
+            style={{ 
+              background: 'none', border: 'none', padding: '6px', cursor: 'pointer',
+              color: 'var(--text-muted)', borderRadius: '6px', transition: 'all 0.2s'
+            }}
+          >
+            <Trash2 size={16} />
+          </button>
+        </div>
+      </div>
+      <style>{`
+        .btn-icon:hover { color: var(--text-primary) !important; background-color: #F5F5F5 !important; }
+        .btn-icon:last-child:hover { color: #E53E3E !important; }
+      `}</style>
     </div>
   );
 }
