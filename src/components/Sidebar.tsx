@@ -1,8 +1,7 @@
 import type { CategoryType } from '../types';
 import { CATEGORY_CONFIG } from '../types';
-import { useAuth } from '../context/AuthContext';
 import { useBeverages } from '../context/BeverageContext';
-import { LogOut, MapPin, BarChart2, Wine } from 'lucide-react';
+import { MapPin, BarChart2, Wine } from 'lucide-react';
 
 interface SidebarProps {
   activeView: string;
@@ -10,7 +9,6 @@ interface SidebarProps {
 }
 
 export default function Sidebar({ activeView, setActiveView }: SidebarProps) {
-  const { user, signOut } = useAuth();
   const { setFilterCategory, filterCategory, items } = useBeverages();
 
   const categories: CategoryType[] = ['wine', 'whisky', 'beer', 'coffee', 'tea'];
@@ -125,37 +123,6 @@ export default function Sidebar({ activeView, setActiveView }: SidebarProps) {
           </button>
         ))}
       </nav>
-
-      {/* User + logout */}
-      <div style={{ padding: '20px', borderTop: '1px solid #2A2A2E' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
-          <div style={{
-            width: 36, height: 36, borderRadius: '50%',
-            background: 'linear-gradient(135deg, #8B1A1A, #C0392B)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 14, fontWeight: 700, color: 'white',
-          }}>
-            {user?.email?.[0]?.toUpperCase() || 'U'}
-          </div>
-          <div style={{ overflow: 'hidden' }}>
-            <p style={{ fontSize: 12, fontWeight: 600, color: '#F0EDE8', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-              {user?.email}
-            </p>
-          </div>
-        </div>
-        <button
-          onClick={signOut}
-          style={{
-            width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-            padding: '9px', borderRadius: 10, border: '1px solid #2A2A2E', cursor: 'pointer',
-            background: 'transparent', color: '#9A948C', fontSize: 13, fontWeight: 500,
-            transition: 'all 0.2s',
-          }}
-        >
-          <LogOut size={14} />
-          Se déconnecter
-        </button>
-      </div>
     </div>
   );
 }

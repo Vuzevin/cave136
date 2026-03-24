@@ -1,7 +1,6 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import type { BaseFields, CategoryType } from '../types';
-import { useAuth } from './AuthContext';
 
 interface BeverageContextType {
   items: BaseFields[];
@@ -27,24 +26,21 @@ export interface FilterState {
 const BeverageContext = createContext<BeverageContextType | undefined>(undefined);
 
 export function BeverageProvider({ children }: { children: React.ReactNode }) {
-  const { user } = useAuth();
   const [items, setItems] = useState<BaseFields[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterCategory, setFilterCategory] = useState<CategoryType | null>(null);
   const [filters, setFilters] = useState<FilterState>({});
 
   useEffect(() => {
-    if (!user) { setItems([]); setLoading(false); return; }
     fetchItems();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, filterCategory]);
+  }, [filterCategory]);
 
   async function fetchItems() {
     setLoading(true);
     let query = supabase
       .from('beverages')
       .select('*')
-      .eq('user_id', user!.id)
       .order('created_at', { ascending: false });
 
     if (filterCategory) {
@@ -57,7 +53,7 @@ export function BeverageProvider({ children }: { children: React.ReactNode }) {
   }
 
   async function addItem(item: Omit<BaseFields, 'id' | 'user_id' | 'created_at'>) {
-    await supabase.from('beverages').insert({ ...item, user_id: user!.id });
+    await supabase.from('beverages').insert({ ...item });
     fetchItems();
   }
 
