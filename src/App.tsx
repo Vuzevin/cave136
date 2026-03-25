@@ -1,14 +1,17 @@
 import { useState } from 'react';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import { BeverageProvider } from './context/BeverageContext';
 import { CATEGORY_CONFIG } from './types';
 import type { CategoryType, SubView } from './types';
 import CellarView from './pages/CellarView';
 import FranceMapPage from './pages/FranceMapPage';
 import WorldMapPage from './pages/WorldMapPage';
-import { Menu, X, ChevronLeft, LayoutGrid } from 'lucide-react';
+import AuthPage from './pages/AuthPage';
+import { Menu, X, ChevronLeft, LayoutGrid, LogOut, User } from 'lucide-react';
 
 function CategoryHub({ onSelect }: { onSelect: (cat: CategoryType) => void }) {
   const categories: CategoryType[] = ['wine', 'whisky', 'beer', 'coffee', 'tea'];
+  const { signOut, user } = useAuth();
 
   return (
     <div className="animate-fade-in" style={{ 
@@ -17,7 +20,44 @@ function CategoryHub({ onSelect }: { onSelect: (cat: CategoryType) => void }) {
       padding: '40px 24px 100px 24px' 
     }}>
       <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
-        <header style={{ textAlign: 'center', marginBottom: '60px' }}>
+        <header style={{ textAlign: 'center', marginBottom: '60px', position: 'relative' }}>
+          <div style={{ position: 'absolute', top: 0, right: 0, display: 'flex', gap: '12px', alignItems: 'center' }}>
+            <div style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: '8px', 
+              background: '#FFFFFF', 
+              padding: '8px 16px', 
+              borderRadius: '100px',
+              border: '1px solid #E8E0D8',
+              fontSize: '13px',
+              fontWeight: 600,
+              color: 'var(--text-secondary)'
+            }}>
+              <User size={14} />
+              {user?.email?.split('@')[0]}
+            </div>
+            <button 
+              onClick={signOut}
+              style={{
+                background: '#FFFFFF',
+                border: '1px solid #E8E0D8',
+                borderRadius: '100px',
+                padding: '8px 16px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                fontSize: '13px',
+                fontWeight: 600,
+                color: '#E53E3E'
+              }}
+            >
+              <LogOut size={14} />
+              Déconnexion
+            </button>
+          </div>
+
           <span style={{ fontSize: '48px', marginBottom: '16px', display: 'block' }}>🍷</span>
           <h1 style={{ fontSize: '56px', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '16px', letterSpacing: '-2px' }}>
             Ma Reserve Personnelle
@@ -67,27 +107,29 @@ function CategoryHub({ onSelect }: { onSelect: (cat: CategoryType) => void }) {
           })}
         </div>
       </div>
-
-      <footer style={{ 
-        position: 'fixed', 
-        bottom: '24px', 
-        left: '50%', 
-        transform: 'translateX(-50%)',
-        opacity: 0.5,
-        fontSize: '12px'
-      }}>
-        Cave136 v2.0 • Premium Beverage Management
-      </footer>
     </div>
   );
 }
 
-function AppContent() {
+function MainApp() {
+  const { user, loading: authLoading, signOut } = useAuth();
   const [activeCategory, setActiveCategory] = useState<CategoryType | null>(null);
   const [activeSubView, setActiveSubView] = useState<SubView>('cave');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const categories: CategoryType[] = ['wine', 'whisky', 'beer', 'coffee', 'tea'];
+
+  if (authLoading) {
+    return (
+      <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#F5F1EC' }}>
+        <Loader2 className="animate-spin" size={40} color="#9A948C" />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <AuthPage />;
+  }
 
   if (!activeCategory) {
     return <CategoryHub onSelect={(cat) => setActiveCategory(cat)} />;
@@ -168,21 +210,41 @@ function AppContent() {
           </nav>
         </div>
 
-        {/* Mobile Menu Toggle */}
-        <button 
-          className="mobile-only"
-          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-          style={{
-            background: 'none',
-            border: 'none',
-            cursor: 'pointer',
-            padding: '8px',
-            borderRadius: '8px',
-            backgroundColor: '#F8F8F8'
-          }}
-        >
-          {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
-        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <button 
+            onClick={signOut}
+            className="desktop-only"
+            style={{ 
+              background: 'none', 
+              border: 'none', 
+              cursor: 'pointer',
+              color: '#E53E3E',
+              fontWeight: 600,
+              fontSize: '13px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px'
+            }}
+          >
+            <LogOut size={16} />
+            Déconnexion
+          </button>
+
+          <button 
+            className="mobile-only"
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            style={{
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              padding: '8px',
+              borderRadius: '8px',
+              backgroundColor: '#F8F8F8'
+            }}
+          >
+            {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
+          </button>
+        </div>
       </header>
 
       {/* Mobile Menu Overlay */}
@@ -233,20 +295,28 @@ function AppContent() {
               {CATEGORY_CONFIG[cat].label}
             </button>
           ))}
+          <button 
+            onClick={() => { signOut(); setIsMobileMenuOpen(false); }}
+            style={{ marginTop: 'auto', padding: '16px', borderRadius: '12px', background: '#FEF2F2', border: 'none', color: '#DC2626', fontWeight: 800 }}
+          >
+            Se déconnecter
+          </button>
         </div>
       )}
 
       {/* Main Content */}
       <main style={{ flex: 1 }}>
-        {activeSubView === 'map' ? (
-          activeCategory === 'wine' ? <FranceMapPage /> : <WorldMapPage />
-        ) : (
-          <CellarView 
-            category={activeCategory} 
-            subView={activeSubView} 
-            setSubView={setActiveSubView} 
-          />
-        )}
+        <BeverageProvider>
+          {activeSubView === 'map' ? (
+            activeCategory === 'wine' ? <FranceMapPage /> : <WorldMapPage />
+          ) : (
+            <CellarView 
+              category={activeCategory} 
+              subView={activeSubView} 
+              setSubView={setActiveSubView} 
+            />
+          )}
+        </BeverageProvider>
       </main>
 
       <style>{`
@@ -261,10 +331,23 @@ function AppContent() {
   );
 }
 
+function Loader2({ className, size, color }: { className?: string; size?: number; color?: string }) {
+  return (
+    <div className={className} style={{ 
+      width: size, 
+      height: size, 
+      border: `4px solid ${color}33`, 
+      borderTop: `4px solid ${color}`, 
+      borderRadius: '50%',
+      animation: 'spin 1s linear infinite'
+    }} />
+  );
+}
+
 export default function App() {
   return (
-    <BeverageProvider>
-      <AppContent />
-    </BeverageProvider>
+    <AuthProvider>
+      <MainApp />
+    </AuthProvider>
   );
 }

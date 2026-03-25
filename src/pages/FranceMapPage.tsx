@@ -95,8 +95,8 @@ export default function FranceMapPage() {
           style={{ width: '100%', height: 500 }}
         >
           <Geographies geography={FRANCE_GEO}>
-            {({ geographies }: { geographies: any[] }) =>
-              geographies.map((geo: any) => {
+            {({ geographies }: { geographies: Array<{ rsmKey: string; properties: { nom: string } }> }) =>
+              geographies.map((geo) => {
                 const regionName = geo.properties.nom;
                 const count = regionCounts[regionName] || 0;
                 return (

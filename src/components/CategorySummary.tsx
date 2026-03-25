@@ -1,6 +1,8 @@
 import { useMemo } from 'react';
-import type { BaseFields, CategoryType } from '../types';
+import type { BaseFields, CategoryType, WineAttributes, WhiskyAttributes, BeerAttributes, CoffeeAttributes, TeaAttributes } from '../types';
 import { CATEGORY_CONFIG } from '../types';
+
+interface AllAttributes extends WineAttributes, WhiskyAttributes, BeerAttributes, CoffeeAttributes, TeaAttributes {}
 
 interface CategorySummaryProps {
   category: CategoryType;
@@ -19,7 +21,7 @@ export default function CategorySummary({ category, items }: CategorySummaryProp
       const region = item.region || 'Inconnu';
       byRegion[region] = (byRegion[region] || 0) + (item.quantity || 1);
       
-      const attrs = item.attributes as any;
+      const attrs = item.attributes as AllAttributes;
       const type = attrs.wine_type || attrs.style || attrs.tea_type || 'Classique';
       byType[type] = (byType[type] || 0) + (item.quantity || 1);
     });

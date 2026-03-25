@@ -1,66 +1,114 @@
-import { createContext, useContext, useEffect, useState } from 'react';
+/* eslint-disable react-refresh/only-export-components */
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import type { BaseFields } from '../types';
+import { useAuth } from './AuthContext';
 
 interface BeverageContextType {
   items: BaseFields[];
   loading: boolean;
+  fetchItems: () => Promise<void>;
   addItem: (item: Omit<BaseFields, 'id' | 'user_id' | 'created_at'>) => Promise<void>;
   updateItem: (id: string, item: Partial<BaseFields>) => Promise<void>;
   deleteItem: (id: string) => Promise<void>;
-  fetchItems: () => Promise<void>;
 }
 
 const BeverageContext = createContext<BeverageContextType | undefined>(undefined);
 
-export function BeverageProvider({ children }: { children: React.ReactNode }) {
+export const BeverageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [items, setItems] = useState<BaseFields[]>([]);
   const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
+
+  const fetchItems = useCallback(async () => {
+    if (!user) {
+      setItems([]);
+      setLoading(false);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('beverages')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setItems(data || []);
+    } catch (error) {
+      console.error('Error fetching beverages:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [user]);
 
   useEffect(() => {
     fetchItems();
-  }, []);
+  }, [fetchItems]);
 
-  async function fetchItems() {
-    setLoading(true);
-    const { data, error } = await supabase
-      .from('beverages')
-      .select('*')
-      .order('created_at', { ascending: false });
+  const addItem = async (item: Omit<BaseFields, 'id' | 'user_id' | 'created_at'>) => {
+    if (!user) return;
+    try {
+      const { data, error } = await supabase
+        .from('beverages')
+        .insert([{ ...item, user_id: user.id }])
+        .select();
 
-    if (!error && data) setItems(data as BaseFields[]);
-    setLoading(false);
-  }
+      if (error) throw error;
+      if (data) setItems([data[0], ...items]);
+    } catch (error) {
+      console.error('Error adding beverage:', error);
+      throw error;
+    }
+  };
 
-  async function addItem(item: Omit<BaseFields, 'id' | 'user_id' | 'created_at'>) {
-    const { error } = await supabase.from('beverages').insert({ ...item });
-    if (!error) fetchItems();
-    else console.error('Error adding item:', error);
-  }
+  const updateItem = async (id: string, item: Partial<BaseFields>) => {
+    if (!user) return;
+    try {
+      const { error } = await supabase
+        .from('beverages')
+        .update(item)
+        .eq('id', id)
+        .eq('user_id', user.id);
 
-  async function updateItem(id: string, item: Partial<BaseFields>) {
-    const { error } = await supabase.from('beverages').update(item).eq('id', id);
-    if (!error) fetchItems();
-    else console.error('Error updating item:', error);
-  }
+      if (error) throw error;
+      setItems(items.map(i => (i.id === id ? { ...i, ...item } : i)));
+    } catch (error) {
+      console.error('Error updating beverage:', error);
+      throw error;
+    }
+  };
 
-  async function deleteItem(id: string) {
-    const { error } = await supabase.from('beverages').delete().eq('id', id);
-    if (!error) fetchItems();
-    else console.error('Error deleting item:', error);
-  }
+  const deleteItem = async (id: string) => {
+    if (!user) return;
+    try {
+      const { error } = await supabase
+        .from('beverages')
+        .delete()
+        .eq('id', id)
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+      setItems(items.filter(i => i.id !== id));
+    } catch (error) {
+      console.error('Error deleting beverage:', error);
+      throw error;
+    }
+  };
 
   return (
-    <BeverageContext.Provider value={{
-      items, loading, addItem, updateItem, deleteItem, fetchItems
-    }}>
+    <BeverageContext.Provider value={{ items, loading, fetchItems, addItem, updateItem, deleteItem }}>
       {children}
     </BeverageContext.Provider>
   );
-}
+};
 
-export function useBeverages() {
+export const useBeverages = () => {
   const context = useContext(BeverageContext);
-  if (!context) throw new Error('useBeverages must be used within BeverageProvider');
+  if (context === undefined) {
+    throw new Error('useBeverages must be used within a BeverageProvider');
+  }
   return context;
-}
+};

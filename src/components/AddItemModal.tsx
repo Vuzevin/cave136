@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import type { BaseFields, CategoryType } from '../types';
+import type { BaseFields, CategoryType, WineAttributes, WhiskyAttributes, BeerAttributes, CoffeeAttributes, TeaAttributes } from '../types';
 import { CATEGORY_CONFIG } from '../types';
 import RatingStars from './RatingStars';
-import { X } from 'lucide-react';
+import { X, Camera, Loader2 } from 'lucide-react';
+import BarcodeScanner from './BarcodeScanner';
+
+interface AllAttributes extends WineAttributes, WhiskyAttributes, BeerAttributes, CoffeeAttributes, TeaAttributes {}
 
 interface AddItemModalProps {
   category: CategoryType;
@@ -34,7 +37,36 @@ const defaultForm = (cat: CategoryType): Omit<BaseFields, 'id' | 'user_id' | 'cr
 export default function AddItemModal({ category, initialData, onSave, onClose }: AddItemModalProps) {
   const config = CATEGORY_CONFIG[category];
   const [form, setForm] = useState(() => initialData ? { ...initialData } : defaultForm(category));
-  const [attrs, setAttrs] = useState<Record<string, any>>(initialData?.attributes || {});
+  const [attrs, setAttrs] = useState<AllAttributes>((initialData?.attributes as AllAttributes) || {});
+  const [showScanner, setShowScanner] = useState(false);
+  const [scanLoading, setScanLoading] = useState(false);
+
+  const handleScan = async (barcode: string) => {
+    setScanLoading(true);
+    try {
+      const response = await fetch(`https://world.openfoodfacts.net/api/v2/product/${barcode}?fields=product_name,origins,brands,image_url,countries`);
+      const data = await response.json();
+      
+      if (data.status === 1 && data.product) {
+        const p = data.product;
+        setForm(prev => ({
+          ...prev,
+          name: p.product_name || prev.name,
+          country: p.origins || p.countries || prev.country,
+          image_url: p.image_url || prev.image_url
+        }));
+        if (p.brands) {
+          setAttrs(prev => ({ ...prev, domain: p.brands, distillery: p.brands, brewery: p.brands }));
+        }
+      } else {
+        alert("Produit non trouvé dans la base Open Food Facts.");
+      }
+    } catch (err) {
+      console.error("OpenFoodFacts Error:", err);
+    } finally {
+      setScanLoading(false);
+    }
+  };
 
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
@@ -44,11 +76,11 @@ export default function AddItemModal({ category, initialData, onSave, onClose }:
 
   function handleSave(e: React.FormEvent) {
     e.preventDefault();
-    onSave({ ...form, category, attributes: attrs });
+    onSave({ ...form, category, attributes: attrs as Record<string, unknown> });
     onClose();
   }
 
-  function updateAttr(key: string, val: any) {
+  function updateAttr(key: string, val: string | number | boolean | undefined) {
     setAttrs(prev => ({ ...prev, [key]: val }));
   }
 
@@ -91,7 +123,29 @@ export default function AddItemModal({ category, initialData, onSave, onClose }:
           {/* Main Info */}
           <div style={rowStyle}>
             <label>Nom de l'item *</label>
-            <input required value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="Ex: Château Margaux, Lagavulin 16, etc." />
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <input required value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="Ex: Château Margaux, Lagavulin 16, etc." style={{ flex: 1 }} />
+              <button 
+                type="button"
+                onClick={() => setShowScanner(true)}
+                style={{ 
+                  background: scanLoading ? '#F5F5F7' : config.bg, 
+                  color: config.color, 
+                  borderRadius: '12px', 
+                  padding: '0 16px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  fontWeight: 700,
+                  fontSize: '13px',
+                  border: 'none',
+                  cursor: 'pointer'
+                }}
+              >
+                {scanLoading ? <Loader2 className="animate-spin" size={18} /> : <Camera size={18} />}
+                {scanLoading ? '...' : 'Scanner'}
+              </button>
+            </div>
           </div>
 
           <div style={twoCol}>
@@ -253,6 +307,13 @@ export default function AddItemModal({ category, initialData, onSave, onClose }:
             {initialData ? '💾 Enregistrer les modifications' : '✨ Ajouter à Cave136'}
           </button>
         </form>
+
+        {showScanner && (
+          <BarcodeScanner 
+            onScan={handleScan}
+            onClose={() => setShowScanner(false)}
+          />
+        )}
       </div>
     </div>
   );

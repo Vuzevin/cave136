@@ -1,7 +1,9 @@
-import type { BaseFields } from '../types';
+import type { BaseFields, WineAttributes, WhiskyAttributes, BeerAttributes, CoffeeAttributes, TeaAttributes } from '../types';
 import { CATEGORY_CONFIG } from '../types';
 import RatingStars from './RatingStars';
 import { Trash2, Edit2, MapPin } from 'lucide-react';
+
+interface AllAttributes extends WineAttributes, WhiskyAttributes, BeerAttributes, CoffeeAttributes, TeaAttributes {}
 
 interface BeverageCardProps {
   item: BaseFields;
@@ -11,7 +13,7 @@ interface BeverageCardProps {
 
 export default function BeverageCard({ item, onEdit, onDelete }: BeverageCardProps) {
   const config = CATEGORY_CONFIG[item.category];
-  const attrs = item.attributes as Record<string, any>;
+  const attrs = item.attributes as AllAttributes;
 
   return (
     <div className="card animate-fade-in" style={{ overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>

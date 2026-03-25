@@ -90,8 +90,8 @@ export default function WorldMapPage() {
         >
           <ZoomableGroup>
             <Geographies geography={WORLD_GEO}>
-              {({ geographies }: { geographies: any[] }) =>
-                geographies.map((geo: any) => {
+              {({ geographies }: { geographies: Array<{ rsmKey: string; properties: { name: string } }> }) =>
+                geographies.map((geo) => {
                   const name = geo.properties.name;
                   const count = countryCounts[name] || 0;
                   return (
