@@ -27,9 +27,14 @@ export default function CategorySummary({ category, items }: CategorySummaryProp
     });
 
     const topRegions = Object.entries(byRegion).sort((a,b) => b[1] - a[1]).slice(0, 3);
-    const types = Object.entries(byType).sort((a,b) => b[1] - a[1]);
+    const types = Object.entries(byType).sort((a,b) => b[1] - a[1]).slice(0, 6);
 
-    return { topRegions, types, total: catItems.length };
+    const totalBottles = catItems.reduce((acc, curr) => acc + (curr.quantity || 1), 0);
+    const totalValue = catItems.reduce((acc, curr) => acc + (curr.price || 0) * (curr.quantity || 1), 0);
+    const maxRating = Math.max(0, ...catItems.map(i => i.rating_general).filter(Boolean) as number[]);
+    const maxPrice = Math.max(0, ...catItems.map(i => i.price).filter(Boolean) as number[]);
+
+    return { topRegions, types, total: catItems.length, totalBottles, totalValue, maxRating, maxPrice };
   }, [items, category]);
 
   if (stats.total === 0) return null;
@@ -43,46 +48,63 @@ export default function CategorySummary({ category, items }: CategorySummaryProp
       gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
       gap: '32px'
     }}>
-      <div>
-        <h4 style={{ fontSize: '12px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '16px' }}>Répartition par Terroir</h4>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          {stats.topRegions.map(([name, count]) => (
-            <div key={name}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', marginBottom: '4px' }}>
-                <span style={{ fontWeight: 600 }}>{name}</span>
-                <span style={{ opacity: 0.6 }}>{count}</span>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        <div>
+          <h4 style={{ fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '12px' }}>Origines Dominantes</h4>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            {stats.topRegions.map(([name, count]) => (
+              <div key={name}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', marginBottom: '4px' }}>
+                  <span style={{ fontWeight: 600 }}>{name}</span>
+                  <span style={{ opacity: 0.6 }}>{count} bottles</span>
+                </div>
+                <div style={{ height: '4px', background: '#F1F1F1', borderRadius: '100px', overflow: 'hidden' }}>
+                  <div style={{ 
+                    height: '100%', 
+                    background: config.color, 
+                    width: `${(count / stats.totalBottles) * 100}%`,
+                    transition: 'width 1s cubic-bezier(0.17, 0.67, 0.83, 0.67)'
+                  }} />
+                </div>
               </div>
-              <div style={{ height: '4px', background: '#EEE', borderRadius: '2px', overflow: 'hidden' }}>
-                <div style={{ 
-                  height: '100%', 
-                  background: config.color, 
-                  width: `${(count / stats.total) * 100}%`,
-                  transition: 'width 1s ease-out'
-                }} />
-              </div>
-            </div>
-          ))}
+            ))}
+          </div>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+          <div style={{ background: '#F8F9FA', padding: '12px', borderRadius: '12px', textAlign: 'center' }}>
+            <span style={{ fontSize: '10px', color: '#9A948C', textTransform: 'uppercase', display: 'block', marginBottom: '4px' }}>Note Max</span>
+            <span style={{ fontSize: '18px', fontWeight: 700, color: config.color }}>{stats.maxRating}/5</span>
+          </div>
+          <div style={{ background: '#F8F9FA', padding: '12px', borderRadius: '12px', textAlign: 'center' }}>
+            <span style={{ fontSize: '10px', color: '#9A948C', textTransform: 'uppercase', display: 'block', marginBottom: '4px' }}>Valeur Tot.</span>
+            <span style={{ fontSize: '18px', fontWeight: 700, color: '#27AE60' }}>{Math.round(stats.totalValue)}€</span>
+          </div>
         </div>
       </div>
 
       <div>
-        <h4 style={{ fontSize: '12px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '16px' }}>Styles & Variétés</h4>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+        <h4 style={{ fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '12px' }}>Styles & Variétés</h4>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
           {stats.types.map(([name, count]) => (
             <div key={name} style={{ 
-              padding: '6px 12px', 
-              borderRadius: '8px', 
-              background: config.soft, 
-              color: config.color,
-              fontSize: '12px',
-              fontWeight: 700,
+              padding: '10px', 
+              borderRadius: '12px', 
+              background: '#FFFFFF', 
+              border: '1px solid #F0F0F0',
               display: 'flex',
-              alignItems: 'center',
-              gap: '6px'
+              flexDirection: 'column',
+              gap: '4px'
             }}>
-              {name} <span style={{ opacity: 0.5, fontWeight: 400 }}>{count}</span>
+              <span style={{ fontSize: '12px', fontWeight: 700, color: '#333' }}>{name}</span>
+              <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{count} références</span>
             </div>
           ))}
+          {stats.types.length === 0 && (
+            <div style={{ gridColumn: 'span 2', textAlign: 'center', padding: '20px', color: 'var(--text-muted)', fontSize: '12px' }}>
+              Pas encore de styles répertoriés.
+            </div>
+          )}
         </div>
       </div>
     </div>

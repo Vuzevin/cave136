@@ -1,7 +1,8 @@
 import type { BaseFields, WineAttributes, WhiskyAttributes, BeerAttributes, CoffeeAttributes, TeaAttributes } from '../types';
 import { CATEGORY_CONFIG } from '../types';
 import RatingStars from './RatingStars';
-import { Trash2, Edit2, MapPin } from 'lucide-react';
+import { Trash2, Edit2, MapPin, Gauge } from 'lucide-react';
+import { useToast } from '../App';
 
 interface AllAttributes extends WineAttributes, WhiskyAttributes, BeerAttributes, CoffeeAttributes, TeaAttributes {}
 
@@ -14,6 +15,14 @@ interface BeverageCardProps {
 export default function BeverageCard({ item, onEdit, onDelete }: BeverageCardProps) {
   const config = CATEGORY_CONFIG[item.category];
   const attrs = item.attributes as AllAttributes;
+  const { addToast } = useToast();
+
+  const handleDelete = () => {
+    if (window.confirm(`Supprimer ${item.name} ?`)) {
+      onDelete(item.id!);
+      addToast(`${item.name} supprimé`, 'info');
+    }
+  };
 
   return (
     <div className="card animate-fade-in" style={{ overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
@@ -56,24 +65,22 @@ export default function BeverageCard({ item, onEdit, onDelete }: BeverageCardPro
           {attrs.wine_type || attrs.style || attrs.tea_type || config.label}
         </div>
 
-        {/* Quantity Badge (for cave items) */}
-        {item.in_stock && (
+        {/* Quantity Gauge Overlay */}
+        {item.in_stock && (item.quantity || 1) > 1 && (
           <div style={{
             position: 'absolute',
-            bottom: '12px',
-            left: '12px',
-            backgroundColor: config.color,
-            color: '#FFFFFF',
-            width: '24px',
-            height: '24px',
-            borderRadius: '6px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: '12px',
-            fontWeight: 700
+            bottom: 0,
+            left: 0,
+            right: 0,
+            height: '4px',
+            background: 'rgba(255,255,255,0.3)',
           }}>
-            {item.quantity || 1}
+            <div style={{
+              height: '100%',
+              background: config.color,
+              width: `${Math.min(100, ((item.quantity || 1) / 12) * 100)}%`, // Assume 12 is a "full" set for visualization
+              transition: 'width 1s ease'
+            }} />
           </div>
         )}
       </div>
@@ -100,15 +107,24 @@ export default function BeverageCard({ item, onEdit, onDelete }: BeverageCardPro
         )}
 
         {/* Key Attributes Row */}
-        <div style={{ display: 'flex', gap: '12px', marginBottom: '16px', flexWrap: 'wrap' }}>
-          {attrs.year && (
-            <div style={{ fontSize: '12px', color: 'var(--text-secondary)', backgroundColor: '#F0F0F0', padding: '2px 8px', borderRadius: '4px' }}>
-              Année {attrs.year}
+        <div style={{ display: 'flex', gap: '8px', marginBottom: '16px', flexWrap: 'wrap' }}>
+          {item.in_stock && (
+            <div style={{ 
+              fontSize: '11px', fontWeight: 700, letterSpacing: '0.5px', textTransform: 'uppercase',
+              color: config.color, background: config.bg, padding: '2px 8px', borderRadius: '4px',
+              display: 'flex', alignItems: 'center', gap: '4px'
+            }}>
+              <Gauge size={10} /> {item.quantity || 1} en stock
             </div>
           )}
-          {attrs.abv && (
-            <div style={{ fontSize: '12px', color: 'var(--text-secondary)', backgroundColor: '#F0F0F0', padding: '2px 8px', borderRadius: '4px' }}>
-              {attrs.abv}% alc.
+          {attrs && 'year' in attrs && attrs.year && (
+            <div style={{ fontSize: '11px', color: 'var(--text-secondary)', background: '#F5F5F7', padding: '2px 8px', borderRadius: '4px', fontWeight: 600 }}>
+              {attrs.year as number}
+            </div>
+          )}
+          {attrs && ('abv' in attrs || 'strength' in attrs) && (
+            <div style={{ fontSize: '11px', color: 'var(--text-secondary)', background: '#F5F5F7', padding: '2px 8px', borderRadius: '4px', fontWeight: 600 }}>
+              {(attrs as any).abv || (attrs as any).strength}% alc.
             </div>
           )}
         </div>
@@ -152,7 +168,7 @@ export default function BeverageCard({ item, onEdit, onDelete }: BeverageCardPro
             <Edit2 size={16} />
           </button>
           <button 
-            onClick={() => onDelete(item.id!)}
+            onClick={handleDelete}
             className="btn-icon"
             style={{ 
               background: 'none', border: 'none', padding: '6px', cursor: 'pointer',

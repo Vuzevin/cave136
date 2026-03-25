@@ -3,6 +3,7 @@ import type { BaseFields, CategoryType, WineAttributes, WhiskyAttributes, BeerAt
 import { CATEGORY_CONFIG } from '../types';
 import RatingStars from './RatingStars';
 import { X, Camera, Loader2 } from 'lucide-react';
+import { useToast } from '../App';
 import BarcodeScanner from './BarcodeScanner';
 
 interface AllAttributes extends WineAttributes, WhiskyAttributes, BeerAttributes, CoffeeAttributes, TeaAttributes {}
@@ -40,6 +41,7 @@ export default function AddItemModal({ category, initialData, onSave, onClose }:
   const [attrs, setAttrs] = useState<AllAttributes>((initialData?.attributes as AllAttributes) || {});
   const [showScanner, setShowScanner] = useState(false);
   const [scanLoading, setScanLoading] = useState(false);
+  const { addToast } = useToast();
 
   const handleScan = async (barcode: string) => {
     setScanLoading(true);
@@ -58,6 +60,7 @@ export default function AddItemModal({ category, initialData, onSave, onClose }:
         if (p.brands) {
           setAttrs(prev => ({ ...prev, domain: p.brands, distillery: p.brands, brewery: p.brands }));
         }
+        addToast("Produit identifié avec succès !", "success");
       } else {
         alert("Produit non trouvé dans la base Open Food Facts.");
       }
@@ -151,14 +154,29 @@ export default function AddItemModal({ category, initialData, onSave, onClose }:
           <div style={twoCol}>
             <div style={rowStyle}>
               <label>Prix (€)</label>
-              <input type="number" value={form.price ?? ''} onChange={e => setForm(f => ({ ...f, price: e.target.value ? Number(e.target.value) : undefined }))} placeholder="0.00" step="0.01" />
+              <input 
+                type="number" 
+                value={form.price === undefined ? '' : form.price} 
+                onChange={e => setForm(f => ({ ...f, price: e.target.value === '' ? undefined : Number(e.target.value) }))} 
+                placeholder="0.00" 
+                step="0.01" 
+              />
             </div>
             <div style={rowStyle}>
               <label>Pays / Région</label>
-              <input value={`${form.country || ''}${form.country && form.region ? ', ' : ''}${form.region || ''}`} onChange={e => {
-                const parts = e.target.value.split(',');
-                setForm(f => ({ ...f, country: parts[0]?.trim(), region: parts[1]?.trim() }));
-              }} placeholder="France, Bordeaux" />
+              <input 
+                value={(form.country || '') + (form.country && form.region ? ', ' : '') + (form.region || '')} 
+                onChange={e => {
+                  const val = e.target.value;
+                  if (!val.includes(',')) {
+                    setForm(f => ({ ...f, country: val.trim(), region: '' }));
+                  } else {
+                    const [c, ...r] = val.split(',');
+                    setForm(f => ({ ...f, country: c.trim(), region: r.join(',').trim() }));
+                  }
+                }} 
+                placeholder="France, Bordeaux" 
+              />
             </div>
           </div>
 
@@ -257,28 +275,98 @@ export default function AddItemModal({ category, initialData, onSave, onClose }:
                     <input value={(attrs.distillery as string) || ''} onChange={e => updateAttr('distillery', e.target.value)} placeholder="Ex: Ardbeg" />
                   </div>
                   <div style={rowStyle}>
-                    <label>Âge</label>
-                    <input type="number" value={(attrs.age as number) || ''} onChange={e => updateAttr('age', Number(e.target.value))} placeholder="10" />
+                    <label>Âge (ans)</label>
+                    <input type="number" value={(attrs.age as number) || ''} onChange={e => updateAttr('age', e.target.value ? Number(e.target.value) : undefined)} placeholder="10" />
+                  </div>
+                </div>
+                <div style={twoCol}>
+                  <div style={rowStyle}>
+                    <label>Type de fût</label>
+                    <input value={(attrs.cask_type as string) || ''} onChange={e => updateAttr('cask_type', e.target.value)} placeholder="Ex: Sherry Cask" />
+                  </div>
+                  <div style={rowStyle}>
+                    <label>Alcool (%)</label>
+                    <input type="number" step="0.1" value={(attrs.strength as number) || ''} onChange={e => updateAttr('strength', e.target.value ? Number(e.target.value) : undefined)} placeholder="46.3" />
                   </div>
                 </div>
                 <div style={rowStyle}>
-                  <label>Type de fût</label>
-                  <input value={(attrs.cask_type as string) || ''} onChange={e => updateAttr('cask_type', e.target.value)} placeholder="Ex: Bourbon Cask" />
+                  <label>Niveau de tourbe</label>
+                  <input value={(attrs.peat_level as string) || ''} onChange={e => updateAttr('peat_level', e.target.value)} placeholder="Ex: Très tourbé" />
                 </div>
               </>
             )}
 
             {category === 'beer' && (
-              <div style={twoCol}>
-                <div style={rowStyle}>
-                  <label>Style</label>
-                  <input value={(attrs.style as string) || ''} onChange={e => updateAttr('style', e.target.value)} placeholder="Ex: IPA" />
+              <>
+                <div style={twoCol}>
+                  <div style={rowStyle}>
+                    <label>Brasserie</label>
+                    <input value={(attrs.brewery as string) || ''} onChange={e => updateAttr('brewery', e.target.value)} placeholder="Ex: BrewDog" />
+                  </div>
+                  <div style={rowStyle}>
+                    <label>Style</label>
+                    <input value={(attrs.style as string) || ''} onChange={e => updateAttr('style', e.target.value)} placeholder="Ex: IPA" />
+                  </div>
+                </div>
+                <div style={twoCol}>
+                  <div style={rowStyle}>
+                    <label>Alcool (%)</label>
+                    <input type="number" step="0.1" value={(attrs.abv as number) || ''} onChange={e => updateAttr('abv', e.target.value ? Number(e.target.value) : undefined)} placeholder="6.5" />
+                  </div>
+                  <div style={rowStyle}>
+                    <label>IBU (Amertume)</label>
+                    <input type="number" value={(attrs.ibu as number) || ''} onChange={e => updateAttr('ibu', e.target.value ? Number(e.target.value) : undefined)} placeholder="45" />
+                  </div>
+                </div>
+              </>
+            )}
+
+            {category === 'coffee' && (
+              <>
+                <div style={twoCol}>
+                  <div style={rowStyle}>
+                    <label>Torréfacteur</label>
+                    <input value={(attrs.roaster as string) || ''} onChange={e => updateAttr('roaster', e.target.value)} placeholder="Ex: Blue Bottle" />
+                  </div>
+                  <div style={rowStyle}>
+                    <label>Origine</label>
+                    <input value={(attrs.origin as string) || ''} onChange={e => updateAttr('origin', e.target.value)} placeholder="Ex: Éthiopie Sidamo" />
+                  </div>
                 </div>
                 <div style={rowStyle}>
-                  <label>IBU (Amertume)</label>
-                  <input type="number" value={(attrs.ibu as number) || ''} onChange={e => updateAttr('ibu', Number(e.target.value))} placeholder="45" />
+                  <label>Méthode d'extraction</label>
+                  <input value={(attrs.extraction_method as string) || ''} onChange={e => updateAttr('extraction_method', e.target.value)} placeholder="Ex: V60, Espresso" />
                 </div>
-              </div>
+                <div style={rowStyle}>
+                  <label>Notes aromatiques</label>
+                  <input value={(attrs.aroma_notes as string) || ''} onChange={e => updateAttr('aroma_notes', e.target.value)} placeholder="Ex: Myrtille, Chocolat" />
+                </div>
+              </>
+            )}
+
+            {category === 'tea' && (
+              <>
+                <div style={twoCol}>
+                  <div style={rowStyle}>
+                    <label>Type de thé</label>
+                    <input value={(attrs.tea_type as string) || ''} onChange={e => updateAttr('tea_type', e.target.value)} placeholder="Ex: Oolong, Sencha" />
+                  </div>
+                  <div style={rowStyle}>
+                    <label>Origine</label>
+                    <input value={(attrs.origin as string) || ''} onChange={e => updateAttr('origin', e.target.value)} placeholder="Ex: Yunnan, Chine" />
+                  </div>
+                </div>
+                <div style={twoCol}>
+                  <div style={rowStyle}>
+                    <label>Temps d'infusion</label>
+                    <input value={(attrs.steep_time as string) || ''} onChange={e => updateAttr('steep_time', e.target.value)} placeholder="Ex: 3 min" />
+                  </div>
+                  <div style={rowStyle}>
+                    <label>Température (°C)</label>
+                    <input value={(attrs.water_temp as string) || ''} onChange={e => updateAttr('water_temp', e.target.value)} placeholder="Ex: 80°C" />
+                  </div>
+                </div>
+              </>
             )}
           </div>
 

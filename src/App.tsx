@@ -1,14 +1,18 @@
-import { useState } from 'react';
+import { useState, createContext, useContext } from 'react';
+import { BrowserRouter } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { BeverageProvider } from './context/BeverageContext';
 import { CATEGORY_CONFIG } from './types';
 import type { CategoryType, SubView } from './types';
 import CellarView from './pages/CellarView';
 import FranceMapPage from './pages/FranceMapPage';
+import EuropeMapPage from './pages/EuropeMapPage';
 import WorldMapPage from './pages/WorldMapPage';
 import AuthPage from './pages/AuthPage';
-import { Menu, X, ChevronLeft, LayoutGrid, LogOut, User } from 'lucide-react';
+import Sidebar from './components/Sidebar';
+import { X, ChevronLeft, Loader2, Bell, CheckCircle, AlertCircle, User, LogOut } from 'lucide-react';
 
+// --- Category Hub Component ---
 function CategoryHub({ onSelect }: { onSelect: (cat: CategoryType) => void }) {
   const categories: CategoryType[] = ['wine', 'whisky', 'beer', 'coffee', 'tea'];
   const { signOut, user } = useAuth();
@@ -111,13 +115,50 @@ function CategoryHub({ onSelect }: { onSelect: (cat: CategoryType) => void }) {
   );
 }
 
+// --- Toast System ---
+type ToastType = 'success' | 'error' | 'info';
+interface Toast { id: number; message: string; type: ToastType; }
+
+const ToastContext = createContext<{ addToast: (msg: string, type?: ToastType) => void }>({ addToast: () => {} });
+
+export function useToast() { return useContext(ToastContext); }
+
+function ToastContainer({ toasts, removeToast }: { toasts: Toast[], removeToast: (id: number) => void }) {
+  return (
+    <div style={{ position: 'fixed', bottom: '24px', right: '24px', zIndex: 9999, display: 'flex', flexDirection: 'column', gap: '10px' }}>
+      {toasts.map(t => (
+        <div key={t.id} className="animate-slide-up" style={{
+          background: t.type === 'success' ? '#10B981' : t.type === 'error' ? '#EF4444' : '#3B82F6',
+          color: 'white', padding: '12px 20px', borderRadius: '12px', boxShadow: '0 10px 25px rgba(0,0,0,0.1)',
+          display: 'flex', alignItems: 'center', gap: '12px', minWidth: '280px', pointerEvents: 'auto'
+        }}>
+          {t.type === 'success' ? <CheckCircle size={18} /> : t.type === 'error' ? <AlertCircle size={18} /> : <Bell size={18} />}
+          <span style={{ fontSize: '14px', fontWeight: 600, flex: 1 }}>{t.message}</span>
+          <button onClick={() => removeToast(t.id)} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.7)', cursor: 'pointer' }}>
+            <X size={16} />
+          </button>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// --- Main App Component ---
 function MainApp() {
-  const { user, loading: authLoading, signOut } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [activeCategory, setActiveCategory] = useState<CategoryType | null>(null);
   const [activeSubView, setActiveSubView] = useState<SubView>('cave');
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [activeMapType, setActiveMapType] = useState<'france' | 'europe' | 'world'>('france');
+  const [locationFilter, setLocationFilter] = useState<string | null>(null);
+  const [toasts, setToasts] = useState<Toast[]>([]);
 
-  const categories: CategoryType[] = ['wine', 'whisky', 'beer', 'coffee', 'tea'];
+  const addToast = (message: string, type: ToastType = 'success') => {
+    const id = Date.now();
+    setToasts(prev => [...prev, { id, message, type }]);
+    setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 5000);
+  };
+
+  const removeToast = (id: number) => setToasts(prev => prev.filter(t => t.id !== id));
 
   if (authLoading) {
     return (
@@ -136,218 +177,88 @@ function MainApp() {
   }
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: '#F5F1EC' }}>
-      {/* Top Navigation */}
-      <header style={{
-        backgroundColor: '#FFFFFF',
-        borderBottom: '1px solid var(--border-soft)',
-        position: 'sticky',
-        top: 0,
-        zIndex: 100,
-        padding: '0 24px',
-        height: '70px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between'
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
-          <button 
-            onClick={() => setActiveCategory(null)}
-            style={{ 
-              background: 'none', 
-              border: 'none', 
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              color: 'var(--text-secondary)',
-              fontWeight: 600,
-              fontSize: '14px'
-            }}
-          >
-            <LayoutGrid size={18} />
-            <span className="desktop-only">Hub</span>
-          </button>
-
-          <div style={{ width: '1px', height: '24px', background: 'var(--border-soft)' }} />
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <h1 style={{ fontSize: '18px', margin: 0, color: 'var(--text-primary)', fontWeight: 800 }}>Cave136</h1>
-          </div>
-
-          {/* Desktop Category Tabs */}
-          <nav className="desktop-only" style={{ display: 'flex', gap: '4px', marginLeft: '12px' }}>
-            {categories.map(cat => {
-              const config = CATEGORY_CONFIG[cat];
-              const isActive = activeCategory === cat;
-              return (
-                <button
-                  key={cat}
-                  onClick={() => {
-                    setActiveCategory(cat);
-                    setActiveSubView('cave');
-                  }}
-                  style={{
-                    padding: '6px 14px',
-                    borderRadius: '100px',
-                    border: 'none',
-                    background: isActive ? config.bg : 'transparent',
-                    color: isActive ? config.color : 'var(--text-secondary)',
-                    fontWeight: 600,
-                    fontSize: '13px',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '6px'
-                  }}
-                >
-                  <span style={{ fontSize: '16px' }}>{config.emoji}</span>
-                  {config.label}
-                </button>
-              );
-            })}
-          </nav>
+    <ToastContext.Provider value={{ addToast }}>
+      <BeverageProvider>
+        <div style={{ display: 'flex', minHeight: '100vh', background: '#F5F1EC' }}>
+          <Sidebar 
+            activeCategory={activeCategory} 
+            onSelectCategory={(cat) => { setActiveCategory(cat); setActiveSubView('cave'); }}
+            onSelectMap={() => { if(activeCategory) setActiveSubView('map'); else setActiveCategory('wine'); }}
+          />
+          
+          <main style={{ flex: 1, position: 'relative' }}>
+            {activeSubView === 'map' ? (
+              <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+                <div style={{ 
+                  background: '#FFFFFF', 
+                  borderBottom: '1px solid var(--border-soft)',
+                  padding: '12px 24px',
+                  display: 'flex',
+                  gap: '8px',
+                  justifyContent: 'center'
+                }}>
+                  {[
+                    { id: 'france', label: 'France', emoji: '🇫🇷' },
+                    { id: 'europe', label: 'Europe', emoji: '🇪🇺' },
+                    { id: 'world', label: 'Monde', emoji: '🌍' }
+                  ].map(m => (
+                    <button
+                      key={m.id}
+                      onClick={() => setActiveMapType(m.id as any)}
+                      style={{
+                        padding: '8px 16px',
+                        borderRadius: '100px',
+                        border: '1px solid ' + (activeMapType === m.id ? 'var(--text-primary)' : 'var(--border-soft)'),
+                        background: activeMapType === m.id ? 'var(--text-primary)' : 'white',
+                        color: activeMapType === m.id ? 'white' : 'var(--text-secondary)',
+                        fontSize: '13px',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px'
+                      }}
+                    >
+                      <span>{m.emoji}</span>
+                      {m.label}
+                    </button>
+                  ))}
+                  <button 
+                    onClick={() => setActiveSubView('cave')}
+                    style={{ marginLeft: 'auto', padding: '8px 16px', borderRadius: '100px', border: 'none', background: '#F5F5F7', fontWeight: 600, fontSize: '13px', cursor: 'pointer' }}
+                  >
+                    Retour à la liste
+                  </button>
+                </div>
+                <div style={{ flex: 1 }}>
+                  {activeMapType === 'france' && <FranceMapPage onSelectRegion={(r) => { setLocationFilter(r); setActiveSubView('cave'); }} />}
+                  {activeMapType === 'europe' && <EuropeMapPage onSelectCountry={(c) => { setLocationFilter(c); setActiveSubView('cave'); }} />}
+                  {activeMapType === 'world' && <WorldMapPage onSelectCountry={(c) => { setLocationFilter(c); setActiveSubView('cave'); }} />}
+                </div>
+              </div>
+            ) : (
+              <CellarView 
+                category={activeCategory} 
+                subView={activeSubView} 
+                setSubView={setActiveSubView} 
+                locationFilter={locationFilter}
+                onClearLocationFilter={() => setLocationFilter(null)}
+              />
+            )}
+          </main>
         </div>
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <button 
-            onClick={signOut}
-            className="desktop-only"
-            style={{ 
-              background: 'none', 
-              border: 'none', 
-              cursor: 'pointer',
-              color: '#E53E3E',
-              fontWeight: 600,
-              fontSize: '13px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px'
-            }}
-          >
-            <LogOut size={16} />
-            Déconnexion
-          </button>
-
-          <button 
-            className="mobile-only"
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            style={{
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              padding: '8px',
-              borderRadius: '8px',
-              backgroundColor: '#F8F8F8'
-            }}
-          >
-            {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
-          </button>
-        </div>
-      </header>
-
-      {/* Mobile Menu Overlay */}
-      {isMobileMenuOpen && (
-        <div style={{
-          position: 'fixed',
-          top: '70px',
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: '#FFFFFF',
-          zIndex: 99,
-          padding: '24px',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '12px'
-        }}>
-          <button 
-            onClick={() => { setActiveCategory(null); setIsMobileMenuOpen(false); }}
-            style={{ padding: '16px', borderRadius: '12px', background: '#F5F5F7', border: 'none', textAlign: 'left', fontWeight: 600 }}
-          >
-            🏠 Retour au Hub global
-          </button>
-          <div style={{ height: '1px', background: '#EEE', margin: '8px 0' }} />
-          {categories.map(cat => (
-            <button
-              key={cat}
-              onClick={() => {
-                setActiveCategory(cat);
-                setActiveSubView('cave');
-                setIsMobileMenuOpen(false);
-              }}
-              style={{
-                padding: '16px',
-                borderRadius: '12px',
-                border: '1px solid var(--border-soft)',
-                background: activeCategory === cat ? CATEGORY_CONFIG[cat].bg : 'transparent',
-                textAlign: 'left',
-                fontSize: '16px',
-                fontWeight: 600,
-                color: activeCategory === cat ? CATEGORY_CONFIG[cat].color : 'var(--text-primary)',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '12px'
-              }}
-            >
-              <span>{CATEGORY_CONFIG[cat].emoji}</span>
-              {CATEGORY_CONFIG[cat].label}
-            </button>
-          ))}
-          <button 
-            onClick={() => { signOut(); setIsMobileMenuOpen(false); }}
-            style={{ marginTop: 'auto', padding: '16px', borderRadius: '12px', background: '#FEF2F2', border: 'none', color: '#DC2626', fontWeight: 800 }}
-          >
-            Se déconnecter
-          </button>
-        </div>
-      )}
-
-      {/* Main Content */}
-      <main style={{ flex: 1 }}>
-        <BeverageProvider>
-          {activeSubView === 'map' ? (
-            activeCategory === 'wine' ? <FranceMapPage /> : <WorldMapPage />
-          ) : (
-            <CellarView 
-              category={activeCategory} 
-              subView={activeSubView} 
-              setSubView={setActiveSubView} 
-            />
-          )}
-        </BeverageProvider>
-      </main>
-
-      <style>{`
-        @media (max-width: 900px) {
-          .desktop-only { display: none !important; }
-        }
-        @media (min-width: 901px) {
-          .mobile-only { display: none !important; }
-        }
-      `}</style>
-    </div>
-  );
-}
-
-function Loader2({ className, size, color }: { className?: string; size?: number; color?: string }) {
-  return (
-    <div className={className} style={{ 
-      width: size, 
-      height: size, 
-      border: `4px solid ${color}33`, 
-      borderTop: `4px solid ${color}`, 
-      borderRadius: '50%',
-      animation: 'spin 1s linear infinite'
-    }} />
+        <ToastContainer toasts={toasts} removeToast={removeToast} />
+      </BeverageProvider>
+    </ToastContext.Provider>
   );
 }
 
 export default function App() {
   return (
-    <AuthProvider>
-      <MainApp />
-    </AuthProvider>
+    <BrowserRouter>
+      <AuthProvider>
+        <MainApp />
+      </AuthProvider>
+    </BrowserRouter>
   );
 }

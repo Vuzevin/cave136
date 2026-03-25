@@ -35,7 +35,7 @@ function matchRegion(itemRegion: string): string | null {
   return null;
 }
 
-export default function FranceMapPage() {
+export default function FranceMapPage({ onSelectRegion }: { onSelectRegion: (r: string) => void }) {
   const { items } = useBeverages();
 
   const regionCounts = useMemo(() => {
@@ -106,9 +106,10 @@ export default function FranceMapPage() {
                     fill={colorScale(count)}
                     stroke="#2A2A2E"
                     strokeWidth={0.8}
+                    onClick={() => count > 0 && onSelectRegion(regionName)}
                     style={{
                       default: { outline: 'none', transition: 'fill 0.3s' },
-                      hover: { fill: '#C0392B', outline: 'none', cursor: 'pointer' },
+                      hover: { fill: '#C0392B', outline: 'none', cursor: count > 0 ? 'pointer' : 'default' },
                       pressed: { outline: 'none' },
                     }}
                   />

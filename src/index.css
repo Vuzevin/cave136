@@ -173,3 +173,32 @@ h1, h2, h3 {
   .beverage-grid { grid-template-columns: 1fr !important; }
   h1 { font-size: 26px !important; }
 }
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+@keyframes slideUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.stagger-item {
+  animation: slideUp 0.5s ease-out forwards;
+}
+
+.beverage-card:hover {
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: 0 20px 40px rgba(0,0,0,0.12);
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.rsm-geography {
+  transition: all 0.3s ease;
+}
+
+.rsm-geography:hover {
+  filter: brightness(1.1);
+  stroke-width: 1.5;
+}

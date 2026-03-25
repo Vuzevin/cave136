@@ -31,7 +31,7 @@ const COUNTRY_NAMES: Record<string, string[]> = {
   'New Zealand': ['nz', 'new zealand', 'nouvelle-zélande'],
 };
 
-export default function WorldMapPage() {
+export default function WorldMapPage({ onSelectCountry }: { onSelectCountry: (c: string) => void }) {
   const { items } = useBeverages();
 
   const countryCounts = useMemo(() => {
@@ -101,9 +101,10 @@ export default function WorldMapPage() {
                       fill={colorScale(count)}
                       stroke="#2A2A2E"
                       strokeWidth={0.3}
+                      onClick={() => count > 0 && onSelectCountry(name)}
                       style={{
                         default: { outline: 'none', transition: 'fill 0.3s' },
-                        hover: { fill: '#C0392B', outline: 'none', cursor: 'pointer' },
+                        hover: { fill: '#C0392B', outline: 'none', cursor: count > 0 ? 'pointer' : 'default' },
                         pressed: { outline: 'none' },
                       }}
                     />

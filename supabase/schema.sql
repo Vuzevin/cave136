@@ -4,7 +4,7 @@
 -- Create beverages table
 CREATE TABLE IF NOT EXISTS public.beverages (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  user_id UUID,  -- nullable, kept for backward compat but not required
+  user_id UUID NOT NULL REFERENCES auth.users(id),
   category TEXT NOT NULL CHECK (category IN ('wine', 'whisky', 'beer', 'coffee', 'tea')),
   name TEXT NOT NULL,
   image_url TEXT,
@@ -18,8 +18,27 @@ CREATE TABLE IF NOT EXISTS public.beverages (
   price DECIMAL(10, 2),
   notes TEXT,
   attributes JSONB DEFAULT '{}'::jsonb,
-  created_at TIMESTAMPTZ DEFAULT NOW()
+  in_stock BOOLEAN DEFAULT TRUE,
+  quantity INTEGER DEFAULT 1,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- Function to handle updated_at
+CREATE OR REPLACE FUNCTION public.handle_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = NOW();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Trigger for updated_at
+DROP TRIGGER IF EXISTS tr_beverages_updated_at ON public.beverages;
+CREATE TRIGGER tr_beverages_updated_at
+  BEFORE UPDATE ON public.beverages
+  FOR EACH ROW
+  EXECUTE FUNCTION public.handle_updated_at();
 
 -- Enable Row Level Security
 ALTER TABLE public.beverages ENABLE ROW LEVEL SECURITY;
@@ -30,22 +49,22 @@ DROP POLICY IF EXISTS "Users can insert own beverages" ON public.beverages;
 DROP POLICY IF EXISTS "Users can update own beverages" ON public.beverages;
 DROP POLICY IF EXISTS "Users can delete own beverages" ON public.beverages;
 
--- New public policies (no authentication required)
-CREATE POLICY "Public read access"
+-- Owners only policies
+CREATE POLICY "Users can view own beverages"
   ON public.beverages FOR SELECT
-  USING (true);
+  USING (auth.uid() = user_id);
 
-CREATE POLICY "Public insert access"
+CREATE POLICY "Users can insert own beverages"
   ON public.beverages FOR INSERT
-  WITH CHECK (true);
+  WITH CHECK (auth.uid() = user_id);
 
-CREATE POLICY "Public update access"
+CREATE POLICY "Users can update own beverages"
   ON public.beverages FOR UPDATE
-  USING (true);
+  USING (auth.uid() = user_id);
 
-CREATE POLICY "Public delete access"
+CREATE POLICY "Users can delete own beverages"
   ON public.beverages FOR DELETE
-  USING (true);
+  USING (auth.uid() = user_id);
 
 -- Also allow anon key to bypass RLS entirely (alternative approach)
 -- GRANT ALL ON public.beverages TO anon;

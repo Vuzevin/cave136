@@ -58,8 +58,9 @@ export const BeverageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
       if (error) throw error;
       if (data) setItems([data[0], ...items]);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error adding beverage:', error);
+      alert(`Erreur lors de l'ajout: ${error.message || 'Erreur inconnue'}`);
       throw error;
     }
   };
@@ -75,8 +76,9 @@ export const BeverageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
       if (error) throw error;
       setItems(items.map(i => (i.id === id ? { ...i, ...item } : i)));
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error updating beverage:', error);
+      alert(`Erreur lors de la modification: ${error.message || 'Erreur inconnue'}`);
       throw error;
     }
   };

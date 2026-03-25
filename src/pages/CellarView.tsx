@@ -7,22 +7,28 @@ import AddItemModal from '../components/AddItemModal';
 import CategorySummary from '../components/CategorySummary';
 import ExportButton from '../components/ExportButton';
 import { Plus, Search, Filter, BookOpen, ArrowUpDown } from 'lucide-react';
+import { useToast } from '../App';
 
 interface CellarViewProps {
   category: CategoryType;
   subView: SubView;
   setSubView: (v: SubView) => void;
+  locationFilter?: string | null;
+  onClearLocationFilter?: () => void;
 }
 
 type SortOption = 'newest' | 'price-asc' | 'price-desc' | 'rating';
 
-export default function CellarView({ category, subView, setSubView }: CellarViewProps) {
+export default function CellarView({ category, subView, setSubView, locationFilter, onClearLocationFilter }: CellarViewProps) {
   const { items, loading, addItem, updateItem, deleteItem } = useBeverages();
   const [showModal, setShowModal] = useState(false);
   const [editingItem, setEditingItem] = useState<BaseFields | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [isJournalMode, setIsJournalMode] = useState(false);
   const [sortBy, setSortBy] = useState<SortOption>('newest');
+  const [minRating, setMinRating] = useState<number>(0);
+  const [maxPrice, setMaxPrice] = useState<number | null>(null);
+  const { addToast } = useToast();
 
   const config = CATEGORY_CONFIG[category];
   
@@ -41,8 +47,27 @@ export default function CellarView({ category, subView, setSubView }: CellarView
       result = result.filter(i => 
         i.name.toLowerCase().includes(q) || 
         i.country?.toLowerCase().includes(q) || 
-        i.region?.toLowerCase().includes(q)
+        i.region?.toLowerCase().includes(q) ||
+        (i.attributes as any)?.appellation?.toLowerCase().includes(q) ||
+        (i.attributes as any)?.distillery?.toLowerCase().includes(q) ||
+        (i.attributes as any)?.brewery?.toLowerCase().includes(q)
       );
+    }
+
+    if (locationFilter) {
+      const f = locationFilter.toLowerCase();
+      result = result.filter(i => 
+        i.country?.toLowerCase() === f || 
+        i.region?.toLowerCase() === f
+      );
+    }
+
+    if (minRating > 0) {
+      result = result.filter(i => i.rating_general >= minRating);
+    }
+
+    if (maxPrice !== null) {
+      result = result.filter(i => (i.price || 0) <= maxPrice);
     }
 
     // Sorting
@@ -54,7 +79,7 @@ export default function CellarView({ category, subView, setSubView }: CellarView
     });
     
     return result;
-  }, [items, category, subView, searchTerm, sortBy]);
+  }, [items, category, subView, searchTerm, sortBy, locationFilter, minRating, maxPrice]);
 
   // Stats calculation
   const stats = useMemo(() => {
@@ -76,8 +101,10 @@ export default function CellarView({ category, subView, setSubView }: CellarView
   async function handleSave(item: Omit<BaseFields, 'id' | 'user_id' | 'created_at'>) {
     if (editingItem?.id) {
       await updateItem(editingItem.id, item);
+      addToast('Modification enregistrée');
     } else {
       await addItem(item);
+      addToast('Nouvel item ajouté à la cave !');
     }
   }
 
@@ -155,8 +182,12 @@ export default function CellarView({ category, subView, setSubView }: CellarView
         }}>
           <div className="section-title" style={{ marginBottom: 0 }}>
             <style>{`.section-title::before { background-color: ${config.color}; }`}</style>
-            <span style={{ fontSize: '24px' }}>{subView === 'cave' ? config.emoji : '📑'}</span>
-            <h2 style={{ fontSize: '24px', margin: 0 }}>{subView === 'cave' ? config.caveLabel : config.tastingLabel}</h2>
+            <span style={{ fontSize: '24px' }}>
+              {subView === 'cave' ? config.emoji : subView === 'map' ? '🗺️' : '📑'}
+            </span>
+            <h2 style={{ fontSize: '24px', margin: 0 }}>
+              {subView === 'cave' ? config.caveLabel : subView === 'map' ? 'Exploration' : config.tastingLabel}
+            </h2>
           </div>
 
           <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
@@ -196,6 +227,21 @@ export default function CellarView({ category, subView, setSubView }: CellarView
                 }}
               >
                 Dégustations
+              </button>
+              <button 
+                onClick={() => setSubView('map')}
+                style={{
+                  padding: '8px 16px',
+                  borderRadius: '8px',
+                  border: 'none',
+                  background: subView === 'map' ? config.bg : 'transparent',
+                  color: subView === 'map' ? config.color : 'var(--text-secondary)',
+                  fontWeight: 600,
+                  fontSize: '13px',
+                  cursor: 'pointer'
+                }}
+              >
+                Cartes
               </button>
             </div>
 
@@ -241,6 +287,48 @@ export default function CellarView({ category, subView, setSubView }: CellarView
         {/* Stats Dashboard */}
         {subView === 'cave' && <CategorySummary category={category} items={items} />}
 
+        {/* Active Filters / Chips */}
+        {(locationFilter || minRating > 0 || maxPrice !== null) && (
+          <div style={{ display: 'flex', gap: '8px', marginBottom: '16px', flexWrap: 'wrap' }}>
+            {locationFilter && (
+              <div style={{ 
+                background: config.bg, color: config.color, padding: '4px 12px', borderRadius: '100px',
+                fontSize: '12px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px',
+                border: `1px solid ${config.color}33`
+              }}>
+                📍 {locationFilter}
+                <button onClick={onClearLocationFilter} style={{ border: 'none', background: 'none', color: config.color, cursor: 'pointer', fontWeight: 800 }}>×</button>
+              </div>
+            )}
+            {minRating > 0 && (
+              <div style={{ 
+                background: '#FFFBEB', color: '#B45309', padding: '4px 12px', borderRadius: '100px',
+                fontSize: '12px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px',
+                border: '1px solid #FEF3C7'
+              }}>
+                ⭐ {minRating}+ étoiles
+                <button onClick={() => setMinRating(0)} style={{ border: 'none', background: 'none', color: '#B45309', cursor: 'pointer', fontWeight: 800 }}>×</button>
+              </div>
+            )}
+            {maxPrice !== null && (
+              <div style={{ 
+                background: '#ECFDF5', color: '#047857', padding: '4px 12px', borderRadius: '100px',
+                fontSize: '12px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px',
+                border: '1px solid #D1FAE5'
+              }}>
+                💰 Max {maxPrice}€
+                <button onClick={() => setMaxPrice(null)} style={{ border: 'none', background: 'none', color: '#047857', cursor: 'pointer', fontWeight: 800 }}>×</button>
+              </div>
+            )}
+            <button 
+              onClick={() => { onClearLocationFilter?.(); setMinRating(0); setMaxPrice(null); }}
+              style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '12px', cursor: 'pointer', textDecoration: 'underline' }}
+            >
+              Tout effacer
+            </button>
+          </div>
+        )}
+
         {/* Search & Sort Bar */}
         <div className="card" style={{ padding: '12px 16px', marginBottom: '32px', display: 'flex', gap: '16px', alignItems: 'center' }}>
           <div style={{ position: 'relative', flex: 1 }}>
@@ -267,12 +355,24 @@ export default function CellarView({ category, subView, setSubView }: CellarView
             </select>
           </div>
 
-          <button style={{ 
-            background: 'none', border: '1px solid var(--border-soft)', 
-            borderRadius: '10px', padding: '0 16px', height: '40px', display: 'flex', 
-            alignItems: 'center', gap: '8px', cursor: 'pointer',
-            color: 'var(--text-secondary)', fontWeight: 600
-          }}>
+          <button 
+            onClick={() => {
+              // Toggle simple filters for now or add a small dropdown/menu
+              const price = prompt('Prix maximum ?', maxPrice?.toString() || '');
+              if (price !== null) setMaxPrice(price === '' ? null : Number(price));
+              
+              const rating = prompt('Note minimum (0-5) ?', minRating.toString());
+              if (rating !== null) setMinRating(Number(rating));
+            }}
+            style={{ 
+              background: 'none', border: '1px solid var(--border-soft)', 
+              borderRadius: '10px', padding: '0 16px', height: '40px', display: 'flex', 
+              alignItems: 'center', gap: '8px', cursor: 'pointer',
+              color: (minRating > 0 || maxPrice !== null) ? config.color : 'var(--text-secondary)', 
+              fontWeight: 600,
+              borderColor: (minRating > 0 || maxPrice !== null) ? config.color : 'var(--border-soft)'
+            }}
+          >
             <Filter size={16} />
             Plus de filtres
           </button>
