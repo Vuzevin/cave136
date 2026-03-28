@@ -17,6 +17,7 @@ CREATE TABLE IF NOT EXISTS public.beverages (
   region TEXT,
   price DECIMAL(10, 2),
   notes TEXT,
+  bio BOOLEAN DEFAULT FALSE,
   attributes JSONB DEFAULT '{}'::jsonb,
   in_stock BOOLEAN DEFAULT TRUE,
   quantity INTEGER DEFAULT 1,

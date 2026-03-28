@@ -15,6 +15,7 @@ export interface BaseFields {
   region?: string;
   price?: number;
   notes?: string;
+  bio?: boolean;
   attributes: Record<string, unknown>;
   created_at?: string;
   in_stock?: boolean;  // true = dans la cave (inventory), false = dégustation only
@@ -28,8 +29,8 @@ export interface WineAttributes {
   grape?: string;
   peak_date?: string;
   domain?: string;
-  bio?: boolean;
-  wine_type?: 'Rouge' | 'Blanc' | 'Rosé' | 'Champagne' | 'Liquoreux' | 'Pétillant';
+  wine_type?: 'Rouge' | 'Blanc' | 'Rosé' | 'Champagne' | 'Liquoreux' | 'Pétillant' | 'Prosecco' | 'Mousseu';
+  no_alcohol?: boolean;
   appellation?: string;
   color?: string;
   terroir?: string;
@@ -50,6 +51,7 @@ export interface BeerAttributes {
   brewery?: string;
   ibu?: number;
   abv?: number;
+  no_alcohol?: boolean;
 }
 
 export interface CoffeeAttributes {
@@ -57,10 +59,12 @@ export interface CoffeeAttributes {
   roaster?: string;
   extraction_method?: string;
   aroma_notes?: string;
+  no_caffeine?: boolean;
 }
 
 export interface TeaAttributes {
   tea_type?: string;
+  type?: 'Mathé' | 'Thé' | 'Infusion' | 'Tisane';
   steep_time?: string;
   water_temp?: string;
   origin?: string;

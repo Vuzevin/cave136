@@ -28,6 +28,9 @@ export default function CellarView({ category, subView, setSubView, locationFilt
   const [sortBy, setSortBy] = useState<SortOption>('newest');
   const [minRating, setMinRating] = useState<number>(0);
   const [maxPrice, setMaxPrice] = useState<number | null>(null);
+  const [filterBio, setFilterBio] = useState(false);
+  const [filterNoAlcohol, setFilterNoAlcohol] = useState(false);
+  const [filterNoCaffeine, setFilterNoCaffeine] = useState(false);
   const { addToast } = useToast();
 
   const config = CATEGORY_CONFIG[category];
@@ -68,6 +71,18 @@ export default function CellarView({ category, subView, setSubView, locationFilt
 
     if (maxPrice !== null) {
       result = result.filter(i => (i.price || 0) <= maxPrice);
+    }
+
+    if (filterBio) {
+      result = result.filter(i => i.bio === true);
+    }
+
+    if (filterNoAlcohol) {
+      result = result.filter(i => (i.attributes as any)?.no_alcohol === true);
+    }
+
+    if (filterNoCaffeine) {
+      result = result.filter(i => (i.attributes as any)?.no_caffeine === true);
     }
 
     // Sorting
@@ -320,8 +335,38 @@ export default function CellarView({ category, subView, setSubView, locationFilt
                 <button onClick={() => setMaxPrice(null)} style={{ border: 'none', background: 'none', color: '#047857', cursor: 'pointer', fontWeight: 800 }}>×</button>
               </div>
             )}
+            {filterBio && (
+              <div style={{ 
+                background: '#ECFDF5', color: '#059669', padding: '4px 12px', borderRadius: '100px',
+                fontSize: '12px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px',
+                border: '1px solid #D1FAE5'
+              }}>
+                🌿 Bio
+                <button onClick={() => setFilterBio(false)} style={{ border: 'none', background: 'none', color: '#059669', cursor: 'pointer', fontWeight: 800 }}>×</button>
+              </div>
+            )}
+            {filterNoAlcohol && (
+              <div style={{ 
+                background: '#EFF6FF', color: '#2563EB', padding: '4px 12px', borderRadius: '100px',
+                fontSize: '12px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px',
+                border: '1px solid #DBEAFE'
+              }}>
+                💧 Sans Alcool
+                <button onClick={() => setFilterNoAlcohol(false)} style={{ border: 'none', background: 'none', color: '#2563EB', cursor: 'pointer', fontWeight: 800 }}>×</button>
+              </div>
+            )}
+            {filterNoCaffeine && (
+              <div style={{ 
+                background: '#FFF7ED', color: '#C2410C', padding: '4px 12px', borderRadius: '100px',
+                fontSize: '12px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px',
+                border: '1px solid #FFEDD5'
+              }}>
+                ☕ Déca
+                <button onClick={() => setFilterNoCaffeine(false)} style={{ border: 'none', background: 'none', color: '#C2410C', cursor: 'pointer', fontWeight: 800 }}>×</button>
+              </div>
+            )}
             <button 
-              onClick={() => { onClearLocationFilter?.(); setMinRating(0); setMaxPrice(null); }}
+              onClick={() => { onClearLocationFilter?.(); setMinRating(0); setMaxPrice(null); setFilterBio(false); setFilterNoAlcohol(false); setFilterNoCaffeine(false); }}
               style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '12px', cursor: 'pointer', textDecoration: 'underline' }}
             >
               Tout effacer
@@ -357,7 +402,60 @@ export default function CellarView({ category, subView, setSubView, locationFilt
 
           <button 
             onClick={() => {
-              // Toggle simple filters for now or add a small dropdown/menu
+              // Toggle Bio filter quickly
+              setFilterBio(!filterBio);
+            }}
+            style={{ 
+              background: filterBio ? '#2E7D32' : 'none', 
+              border: '1px solid ' + (filterBio ? '#2E7D32' : 'var(--border-soft)'), 
+              borderRadius: '100px', padding: '0 16px', height: '36px', display: 'flex', 
+              alignItems: 'center', gap: '8px', cursor: 'pointer',
+              color: filterBio ? 'white' : 'var(--text-secondary)', 
+              fontWeight: 600,
+              fontSize: '12px'
+            }}
+          >
+            🌿 Bio
+          </button>
+
+          {(category === 'wine' || category === 'beer') && (
+            <button 
+              onClick={() => setFilterNoAlcohol(!filterNoAlcohol)}
+              style={{ 
+                background: filterNoAlcohol ? '#2563EB' : 'none', 
+                border: '1px solid ' + (filterNoAlcohol ? '#2563EB' : 'var(--border-soft)'), 
+                borderRadius: '100px', padding: '0 16px', height: '36px', display: 'flex', 
+                alignItems: 'center', gap: '8px', cursor: 'pointer',
+                color: filterNoAlcohol ? 'white' : 'var(--text-secondary)', 
+                fontWeight: 600,
+                fontSize: '12px'
+              }}
+            >
+              💧 Sans Alcool
+            </button>
+          )}
+
+          {category === 'coffee' && (
+            <button 
+              onClick={() => setFilterNoCaffeine(!filterNoCaffeine)}
+              style={{ 
+                background: filterNoCaffeine ? '#C2410C' : 'none', 
+                border: '1px solid ' + (filterNoCaffeine ? '#C2410C' : 'var(--border-soft)'), 
+                borderRadius: '100px', padding: '0 16px', height: '36px', display: 'flex', 
+                alignItems: 'center', gap: '8px', cursor: 'pointer',
+                color: filterNoCaffeine ? 'white' : 'var(--text-secondary)', 
+                fontWeight: 600,
+                fontSize: '12px'
+              }}
+            >
+              ☕ Déca
+            </button>
+          )}
+
+          <div style={{ width: '1px', height: '24px', background: 'var(--border-soft)', margin: '0 8px' }} />
+
+          <button 
+            onClick={() => {
               const price = prompt('Prix maximum ?', maxPrice?.toString() || '');
               if (price !== null) setMaxPrice(price === '' ? null : Number(price));
               

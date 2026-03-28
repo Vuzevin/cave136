@@ -52,8 +52,8 @@ export default function FranceMapPage({ onSelectRegion }: { onSelectRegion: (r: 
 
   const maxCount = Math.max(1, ...Object.values(regionCounts));
   const colorScale = scaleLinear<string>()
-    .domain([0, maxCount])
-    .range(['#1a1a2e', '#8B1A1A']);
+    .domain([0, maxCount * 0.2, maxCount])
+    .range(['#1a1a2e', '#4A0E0E', '#C0392B']);
 
   return (
     <div style={{ flex: 1, padding: '28px 32px', overflowY: 'auto' }}>
@@ -108,9 +108,9 @@ export default function FranceMapPage({ onSelectRegion }: { onSelectRegion: (r: 
                     strokeWidth={0.8}
                     onClick={() => count > 0 && onSelectRegion(regionName)}
                     style={{
-                      default: { outline: 'none', transition: 'fill 0.3s' },
-                      hover: { fill: '#C0392B', outline: 'none', cursor: count > 0 ? 'pointer' : 'default' },
-                      pressed: { outline: 'none' },
+                      default: { outline: 'none', transition: 'all 0.3s ease' },
+                      hover: { fill: count > 0 ? '#E74C3C' : '#2A2A2E', outline: 'none', cursor: count > 0 ? 'pointer' : 'default', filter: count > 0 ? 'drop-shadow(0 0 8px rgba(192,57,43,0.4))' : 'none' },
+                      pressed: { outline: 'none', scale: 0.98 },
                     }}
                   />
                 );

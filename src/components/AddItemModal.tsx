@@ -15,7 +15,8 @@ interface AddItemModalProps {
   onClose: () => void;
 }
 
-const WINE_TYPES = ['Rouge', 'Blanc', 'Rosé', 'Champagne'];
+const WINE_TYPES = ['Rouge', 'Blanc', 'Rosé', 'Champagne', 'Liquoreux', 'Pétillant', 'Prosecco', 'Mousseu'];
+const TEA_CATEGORIES = ['Thé', 'Mathé', 'Infusion', 'Tisane'];
 
 const defaultForm = (cat: CategoryType): Omit<BaseFields, 'id' | 'user_id' | 'created_at'> => ({
   category: cat,
@@ -30,6 +31,7 @@ const defaultForm = (cat: CategoryType): Omit<BaseFields, 'id' | 'user_id' | 'cr
   region: '',
   price: undefined,
   notes: '',
+  bio: false,
   attributes: {},
   in_stock: true,
   quantity: 1
@@ -163,19 +165,41 @@ export default function AddItemModal({ category, initialData, onSave, onClose }:
               />
             </div>
             <div style={rowStyle}>
-              <label>Pays / Région</label>
+              <label>Option Bio</label>
+              <div 
+                onClick={() => setForm(f => ({ ...f, bio: !f.bio }))}
+                style={{
+                  width: '48px', height: '24px', borderRadius: '24px', cursor: 'pointer',
+                  backgroundColor: form.bio ? '#2E7D32' : '#444',
+                  position: 'relative', transition: '.2s', display: 'flex', alignItems: 'center'
+                }}
+              >
+                <div style={{
+                  position: 'absolute', height: '18px', width: '18px', left: form.bio ? '26px' : '4px',
+                  backgroundColor: 'white', borderRadius: '50%', transition: '.2s'
+                }} />
+                <span style={{ marginLeft: '52px', fontSize: '12px', color: form.bio ? '#2E7D32' : '#9A948C', fontWeight: 700, whiteSpace: 'nowrap' }}>
+                  {form.bio ? 'BIO ✓' : 'Non-Bio'}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div style={twoCol}>
+            <div style={rowStyle}>
+              <label>Pays</label>
               <input 
-                value={(form.country || '') + (form.country && form.region ? ', ' : '') + (form.region || '')} 
-                onChange={e => {
-                  const val = e.target.value;
-                  if (!val.includes(',')) {
-                    setForm(f => ({ ...f, country: val.trim(), region: '' }));
-                  } else {
-                    const [c, ...r] = val.split(',');
-                    setForm(f => ({ ...f, country: c.trim(), region: r.join(',').trim() }));
-                  }
-                }} 
-                placeholder="France, Bordeaux" 
+                value={form.country || ''} 
+                onChange={e => setForm(f => ({ ...f, country: e.target.value }))} 
+                placeholder="Ex: France" 
+              />
+            </div>
+            <div style={rowStyle}>
+              <label>Région</label>
+              <input 
+                value={form.region || ''} 
+                onChange={e => setForm(f => ({ ...f, region: e.target.value }))} 
+                placeholder="Ex: Bordeaux" 
               />
             </div>
           </div>
@@ -185,7 +209,18 @@ export default function AddItemModal({ category, initialData, onSave, onClose }:
             <div style={twoCol}>
               <div style={rowStyle}>
                 <label>Type de vin</label>
-                <select value={(attrs.wine_type as string) || ''} onChange={e => updateAttr('wine_type', e.target.value)}>
+                <select 
+                  value={(attrs.wine_type as string) || ''} 
+                  onChange={e => {
+                    const val = e.target.value;
+                    updateAttr('wine_type', val);
+                    if (val === 'Champagne') {
+                      setForm(f => ({ ...f, region: 'Champagne', country: 'France' }));
+                    } else if (val === 'Prosecco') {
+                      setForm(f => ({ ...f, country: 'Italie' }));
+                    }
+                  }}
+                >
                   <option value="">Sélectionner</option>
                   {WINE_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
                 </select>
@@ -264,6 +299,22 @@ export default function AddItemModal({ category, initialData, onSave, onClose }:
                   <label>Terroir / Parcelle</label>
                   <input value={(attrs.terroir as string) || ''} onChange={e => updateAttr('terroir', e.target.value)} placeholder="Ex: Argiles bleues" />
                 </div>
+                <div style={rowStyle}>
+                  <label>Sans Alcool</label>
+                  <div 
+                    onClick={() => updateAttr('no_alcohol', !attrs.no_alcohol)}
+                    style={{
+                      width: '48px', height: '24px', borderRadius: '24px', cursor: 'pointer',
+                      backgroundColor: attrs.no_alcohol ? config.color : '#444',
+                      position: 'relative', transition: '.2s', display: 'flex', alignItems: 'center'
+                    }}
+                  >
+                    <div style={{
+                      position: 'absolute', height: '18px', width: '18px', left: attrs.no_alcohol ? '26px' : '4px',
+                      backgroundColor: 'white', borderRadius: '50%', transition: '.2s'
+                    }} />
+                  </div>
+                </div>
               </>
             )}
 
@@ -314,9 +365,25 @@ export default function AddItemModal({ category, initialData, onSave, onClose }:
                     <input type="number" step="0.1" value={(attrs.abv as number) || ''} onChange={e => updateAttr('abv', e.target.value ? Number(e.target.value) : undefined)} placeholder="6.5" />
                   </div>
                   <div style={rowStyle}>
-                    <label>IBU (Amertume)</label>
-                    <input type="number" value={(attrs.ibu as number) || ''} onChange={e => updateAttr('ibu', e.target.value ? Number(e.target.value) : undefined)} placeholder="45" />
+                    <label>Sans Alcool</label>
+                    <div 
+                      onClick={() => updateAttr('no_alcohol', !attrs.no_alcohol)}
+                      style={{
+                        width: '48px', height: '24px', borderRadius: '24px', cursor: 'pointer',
+                        backgroundColor: attrs.no_alcohol ? config.color : '#444',
+                        position: 'relative', transition: '.2s', display: 'flex', alignItems: 'center'
+                      }}
+                    >
+                      <div style={{
+                        position: 'absolute', height: '18px', width: '18px', left: attrs.no_alcohol ? '26px' : '4px',
+                        backgroundColor: 'white', borderRadius: '50%', transition: '.2s'
+                      }} />
+                    </div>
                   </div>
+                </div>
+                <div style={rowStyle}>
+                  <label>IBU (Amertume)</label>
+                  <input type="number" value={(attrs.ibu as number) || ''} onChange={e => updateAttr('ibu', e.target.value ? Number(e.target.value) : undefined)} placeholder="45" />
                 </div>
               </>
             )}
@@ -333,9 +400,27 @@ export default function AddItemModal({ category, initialData, onSave, onClose }:
                     <input value={(attrs.origin as string) || ''} onChange={e => updateAttr('origin', e.target.value)} placeholder="Ex: Éthiopie Sidamo" />
                   </div>
                 </div>
-                <div style={rowStyle}>
-                  <label>Méthode d'extraction</label>
-                  <input value={(attrs.extraction_method as string) || ''} onChange={e => updateAttr('extraction_method', e.target.value)} placeholder="Ex: V60, Espresso" />
+                <div style={twoCol}>
+                  <div style={rowStyle}>
+                    <label>Méthode d'extraction</label>
+                    <input value={(attrs.extraction_method as string) || ''} onChange={e => updateAttr('extraction_method', e.target.value)} placeholder="Ex: V60, Espresso" />
+                  </div>
+                  <div style={rowStyle}>
+                    <label>Sans Caféine</label>
+                    <div 
+                      onClick={() => updateAttr('no_caffeine', !attrs.no_caffeine)}
+                      style={{
+                        width: '48px', height: '24px', borderRadius: '24px', cursor: 'pointer',
+                        backgroundColor: attrs.no_caffeine ? config.color : '#444',
+                        position: 'relative', transition: '.2s', display: 'flex', alignItems: 'center'
+                      }}
+                    >
+                      <div style={{
+                        position: 'absolute', height: '18px', width: '18px', left: attrs.no_caffeine ? '26px' : '4px',
+                        backgroundColor: 'white', borderRadius: '50%', transition: '.2s'
+                      }} />
+                    </div>
+                  </div>
                 </div>
                 <div style={rowStyle}>
                   <label>Notes aromatiques</label>
@@ -348,13 +433,37 @@ export default function AddItemModal({ category, initialData, onSave, onClose }:
               <>
                 <div style={twoCol}>
                   <div style={rowStyle}>
-                    <label>Type de thé</label>
-                    <input value={(attrs.tea_type as string) || ''} onChange={e => updateAttr('tea_type', e.target.value)} placeholder="Ex: Oolong, Sencha" />
+                    <label>Type de thé / infusion</label>
+                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                      {TEA_CATEGORIES.map(t => (
+                        <button
+                          key={t}
+                          type="button"
+                          onClick={() => updateAttr('type', t)}
+                          style={{
+                            padding: '6px 12px',
+                            borderRadius: '8px',
+                            border: '1px solid ' + (attrs.type === t ? config.color : '#2A2A2E'),
+                            background: attrs.type === t ? config.bg : 'transparent',
+                            color: attrs.type === t ? config.color : '#9A948C',
+                            cursor: 'pointer',
+                            fontSize: '12px',
+                            fontWeight: 600
+                          }}
+                        >
+                          {t}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                   <div style={rowStyle}>
                     <label>Origine</label>
                     <input value={(attrs.origin as string) || ''} onChange={e => updateAttr('origin', e.target.value)} placeholder="Ex: Yunnan, Chine" />
                   </div>
+                </div>
+                <div style={rowStyle}>
+                  <label>Détails variété</label>
+                  <input value={(attrs.tea_type as string) || ''} onChange={e => updateAttr('tea_type', e.target.value)} placeholder="Ex: Oolong, Sencha" />
                 </div>
                 <div style={twoCol}>
                   <div style={rowStyle}>

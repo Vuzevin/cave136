@@ -1,7 +1,7 @@
 import type { BaseFields, WineAttributes, WhiskyAttributes, BeerAttributes, CoffeeAttributes, TeaAttributes } from '../types';
 import { CATEGORY_CONFIG } from '../types';
 import RatingStars from './RatingStars';
-import { Trash2, Edit2, MapPin, Gauge } from 'lucide-react';
+import { Trash2, Edit2, MapPin, Gauge, Leaf, Droplets, Coffee, Sprout } from 'lucide-react';
 import { useToast } from '../App';
 
 interface AllAttributes extends WineAttributes, WhiskyAttributes, BeerAttributes, CoffeeAttributes, TeaAttributes {}
@@ -62,8 +62,27 @@ export default function BeverageCard({ item, onEdit, onDelete }: BeverageCardPro
           alignItems: 'center',
           gap: '6px'
         }}>
-          {attrs.wine_type || attrs.style || attrs.tea_type || config.label}
+          {attrs.wine_type || attrs.style || attrs.type || attrs.tea_type || config.label}
         </div>
+
+        {/* Bio Badge */}
+        {item.bio && (
+          <div style={{
+            position: 'absolute',
+            top: '12px',
+            right: '12px',
+            backgroundColor: '#2E7D32',
+            padding: '6px',
+            borderRadius: '50%',
+            color: 'white',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}>
+            <Leaf size={14} fill="white" />
+          </div>
+        )}
 
         {/* Quantity Gauge Overlay */}
         {item.in_stock && (item.quantity || 1) > 1 && (
@@ -122,9 +141,24 @@ export default function BeverageCard({ item, onEdit, onDelete }: BeverageCardPro
               {attrs.year as number}
             </div>
           )}
-          {attrs && ('abv' in attrs || 'strength' in attrs) && (
+          {attrs && ('abv' in attrs || 'strength' in attrs) && !attrs.no_alcohol && (
             <div style={{ fontSize: '11px', color: 'var(--text-secondary)', background: '#F5F5F7', padding: '2px 8px', borderRadius: '4px', fontWeight: 600 }}>
               {(attrs as any).abv || (attrs as any).strength}% alc.
+            </div>
+          )}
+          {attrs && 'no_alcohol' in attrs && attrs.no_alcohol && (
+            <div style={{ fontSize: '11px', color: '#10B981', background: '#ECFDF5', padding: '2px 8px', borderRadius: '4px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '3px' }}>
+              <Droplets size={10} /> Sans Alcool
+            </div>
+          )}
+          {attrs && 'no_caffeine' in attrs && attrs.no_caffeine && (
+            <div style={{ fontSize: '11px', color: '#92650A', background: '#FEF3C7', padding: '2px 8px', borderRadius: '4px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '3px' }}>
+              <Coffee size={10} /> Déca
+            </div>
+          )}
+          {attrs && 'type' in attrs && attrs.type && (
+            <div style={{ fontSize: '11px', color: '#1A5732', background: '#EAF5EE', padding: '2px 8px', borderRadius: '4px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '3px' }}>
+              <Sprout size={10} /> {attrs.type}
             </div>
           )}
         </div>
