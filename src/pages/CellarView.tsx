@@ -4,9 +4,11 @@ import { CATEGORY_CONFIG } from '../types';
 import { useBeverages } from '../context/BeverageContext';
 import BeverageCard from '../components/BeverageCard';
 import AddItemModal from '../components/AddItemModal';
+import FilterModal from '../components/FilterModal';
 import CategorySummary from '../components/CategorySummary';
 import ExportButton from '../components/ExportButton';
-import { Plus, Search, Filter, BookOpen, ArrowUpDown } from 'lucide-react';
+import ImportDataModal from '../components/ImportDataModal';
+import { Plus, Search, Filter, BookOpen, ArrowUpDown, LayoutGrid, List, Upload } from 'lucide-react';
 import { useToast } from '../App';
 
 interface CellarViewProps {
@@ -22,9 +24,12 @@ type SortOption = 'newest' | 'price-asc' | 'price-desc' | 'rating';
 export default function CellarView({ category, subView, setSubView, locationFilter, onClearLocationFilter }: CellarViewProps) {
   const { items, loading, addItem, updateItem, deleteItem } = useBeverages();
   const [showModal, setShowModal] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [showFilterModal, setShowFilterModal] = useState(false);
   const [editingItem, setEditingItem] = useState<BaseFields | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [isJournalMode, setIsJournalMode] = useState(false);
+  const [isTableMode, setIsTableMode] = useState(false);
   const [sortBy, setSortBy] = useState<SortOption>('newest');
   const [minRating, setMinRating] = useState<number>(0);
   const [maxPrice, setMaxPrice] = useState<number | null>(null);
@@ -120,6 +125,12 @@ export default function CellarView({ category, subView, setSubView, locationFilt
     } else {
       await addItem(item);
       addToast('Nouvel item ajouté à la cave !');
+    }
+  }
+
+  async function handleImport(importedItems: any[]) {
+    for (const item of importedItems) {
+      await addItem(item);
     }
   }
 
@@ -276,12 +287,42 @@ export default function CellarView({ category, subView, setSubView, locationFilt
                   cursor: 'pointer'
                 }}
               >
-                <BookOpen size={16} />
+                {isJournalMode ? <LayoutGrid size={16} /> : <BookOpen size={16} />}
                 {isJournalMode ? 'Vue Grille' : 'Mode Journal'}
+              </button>
+            )}
+            {subView === 'cave' && (
+              <button 
+                onClick={() => setIsTableMode(!isTableMode)}
+                style={{
+                  padding: '8px 16px',
+                  borderRadius: '12px',
+                  border: '1px solid var(--border-soft)',
+                  background: isTableMode ? '#F5F5F7' : 'white',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  cursor: 'pointer'
+                }}
+              >
+                {isTableMode ? <LayoutGrid size={16} /> : <List size={16} />}
+                {isTableMode ? 'Vue Grille' : 'Vue Tableau'}
               </button>
             )}
 
             <div style={{ display: 'flex', gap: '8px' }}>
+              <button 
+                onClick={() => setShowImportModal(true)}
+                style={{
+                  background: 'none', border: '1px solid var(--border-soft)', borderRadius: '10px',
+                  padding: '0 12px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--text-secondary)'
+                }}
+                title="Importer depuis CSV"
+              >
+                <Upload size={18} />
+              </button>
               <ExportButton category={category} items={items} />
               <button 
                 onClick={() => { setEditingItem(null); setShowModal(true); }}
@@ -375,14 +416,14 @@ export default function CellarView({ category, subView, setSubView, locationFilt
         )}
 
         {/* Search & Sort Bar */}
-        <div className="card" style={{ padding: '12px 16px', marginBottom: '32px', display: 'flex', gap: '16px', alignItems: 'center' }}>
-          <div style={{ position: 'relative', flex: 1 }}>
+        <div className="card filter-bar-scrollable" style={{ padding: '12px 16px', marginBottom: '32px', display: 'flex', gap: '16px', alignItems: 'center', overflowX: 'auto', whiteSpace: 'nowrap', WebkitOverflowScrolling: 'touch' }}>
+          <div style={{ position: 'relative', flex: '1 0 200px' }}>
             <Search size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
             <input 
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
-              placeholder="Rechercher par nom, pays, région..."
-              style={{ paddingLeft: '40px', border: 'none', background: '#F9F9F9', width: '100%', height: '40px' }}
+              placeholder="Rechercher par nom..."
+              style={{ paddingLeft: '40px', border: 'none', background: '#F9F9F9', width: '100%', height: '40px', borderRadius: '8px' }}
             />
           </div>
           
@@ -455,19 +496,14 @@ export default function CellarView({ category, subView, setSubView, locationFilt
           <div style={{ width: '1px', height: '24px', background: 'var(--border-soft)', margin: '0 8px' }} />
 
           <button 
-            onClick={() => {
-              const price = prompt('Prix maximum ?', maxPrice?.toString() || '');
-              if (price !== null) setMaxPrice(price === '' ? null : Number(price));
-              
-              const rating = prompt('Note minimum (0-5) ?', minRating.toString());
-              if (rating !== null) setMinRating(Number(rating));
-            }}
+            onClick={() => setShowFilterModal(true)}
             style={{ 
               background: 'none', border: '1px solid var(--border-soft)', 
               borderRadius: '10px', padding: '0 16px', height: '40px', display: 'flex', 
               alignItems: 'center', gap: '8px', cursor: 'pointer',
               color: (minRating > 0 || maxPrice !== null) ? config.color : 'var(--text-secondary)', 
               fontWeight: 600,
+              flexShrink: 0,
               borderColor: (minRating > 0 || maxPrice !== null) ? config.color : 'var(--border-soft)'
             }}
           >
@@ -557,6 +593,55 @@ export default function CellarView({ category, subView, setSubView, locationFilt
               </div>
             ))}
           </div>
+        ) : subView === 'cave' && isTableMode ? (
+          <div className="card" style={{ overflowX: 'auto', padding: '10px' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '800px' }}>
+              <thead>
+                <tr style={{ borderBottom: '2px solid var(--border-soft)', color: 'var(--text-secondary)', fontSize: '13px' }}>
+                  <th style={{ padding: '16px' }}>Nom</th>
+                  <th style={{ padding: '16px' }}>Pays / Région</th>
+                  <th style={{ padding: '16px' }}>Prix</th>
+                  <th style={{ padding: '16px' }}>Note</th>
+                  <th style={{ padding: '16px' }}>Quantité</th>
+                  <th style={{ padding: '16px', textAlign: 'right' }}>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.map(item => (
+                  <tr key={item.id} style={{ borderBottom: '1px solid var(--border-soft)' }}>
+                    <td style={{ padding: '16px', fontWeight: 600 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        {item.image_url ? (
+                          <img src={item.image_url} alt={item.name} style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '8px' }} />
+                        ) : (
+                          <div style={{ width: '40px', height: '40px', borderRadius: '8px', background: config.soft, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px' }}>{config.emoji}</div>
+                        )}
+                        <div>
+                          {item.name}
+                          {item.bio && <span style={{ marginLeft: '8px', fontSize: '12px', background: '#ECFDF5', color: '#059669', padding: '2px 6px', borderRadius: '4px' }}>Bio</span>}
+                        </div>
+                      </div>
+                    </td>
+                    <td style={{ padding: '16px', color: 'var(--text-secondary)' }}>{item.country} {item.region && `- ${item.region}`}</td>
+                    <td style={{ padding: '16px', fontWeight: 600 }}>{item.price ? `${item.price}€` : '-'}</td>
+                    <td style={{ padding: '16px' }}>{item.rating_general > 0 ? `⭐ ${item.rating_general}/5` : '-'}</td>
+                    <td style={{ padding: '16px' }}>
+                      <span style={{ 
+                        background: item.quantity && item.quantity > 0 ? config.soft : '#FEE2E2', 
+                        color: item.quantity && item.quantity > 0 ? config.color : '#DC2626',
+                        padding: '4px 12px', borderRadius: '100px', fontSize: '13px', fontWeight: 700 
+                      }}>
+                        {item.quantity || 0}
+                      </span>
+                    </td>
+                    <td style={{ padding: '16px', textAlign: 'right' }}>
+                      <button onClick={() => { setEditingItem(item); setShowModal(true); }} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '13px', marginRight: '16px', fontWeight: 600 }}>Modifier</button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         ) : (
           <div className="beverage-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '24px' }}>
             {filtered.map(item => (
@@ -577,6 +662,28 @@ export default function CellarView({ category, subView, setSubView, locationFilt
           initialData={editingItem}
           onSave={handleSave}
           onClose={() => { setShowModal(false); setEditingItem(null); }}
+        />
+      )}
+
+      {showImportModal && (
+        <ImportDataModal 
+          category={category}
+          onImport={handleImport}
+          onClose={() => setShowImportModal(false)}
+        />
+      )}
+
+      {showFilterModal && (
+        <FilterModal 
+          initialMaxPrice={maxPrice}
+          initialMinRating={minRating}
+          color={config.color}
+          onApply={(price, rating) => {
+            setMaxPrice(price);
+            setMinRating(rating);
+            setShowFilterModal(false);
+          }}
+          onClose={() => setShowFilterModal(false)}
         />
       )}
     </div>

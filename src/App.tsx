@@ -10,6 +10,7 @@ import EuropeMapPage from './pages/EuropeMapPage';
 import WorldMapPage from './pages/WorldMapPage';
 import AuthPage from './pages/AuthPage';
 import Sidebar from './components/Sidebar';
+import BottomNav from './components/BottomNav';
 import { X, ChevronLeft, Loader2, Bell, CheckCircle, AlertCircle, User, LogOut } from 'lucide-react';
 
 // --- Category Hub Component ---
@@ -179,7 +180,7 @@ function MainApp() {
   return (
     <ToastContext.Provider value={{ addToast }}>
       <BeverageProvider>
-        <div style={{ display: 'flex', minHeight: '100vh', background: '#F5F1EC' }}>
+        <div className="main-layout" style={{ display: 'flex', minHeight: '100vh', background: '#F5F1EC' }}>
           <Sidebar 
             activeCategory={activeCategory} 
             onSelectCategory={(cat) => { setActiveCategory(cat); setActiveSubView('cave'); }}
@@ -246,6 +247,13 @@ function MainApp() {
               />
             )}
           </main>
+          
+          <BottomNav 
+            activeCategory={activeCategory} 
+            activeSubView={activeSubView} 
+            onSelectCategory={(cat) => { setActiveCategory(cat); setActiveSubView('cave'); }} 
+            onSelectSubView={(v) => setActiveSubView(v)}
+          />
         </div>
         <ToastContainer toasts={toasts} removeToast={removeToast} />
       </BeverageProvider>

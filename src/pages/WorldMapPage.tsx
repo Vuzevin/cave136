@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { ComposableMap, Geographies, Geography, ZoomableGroup } from 'react-simple-maps';
 import { scaleLinear } from 'd3-scale';
 import { useBeverages } from '../context/BeverageContext';
@@ -34,6 +34,7 @@ const COUNTRY_NAMES: Record<string, string[]> = {
 
 export default function WorldMapPage({ onSelectCountry }: { onSelectCountry: (c: string) => void }) {
   const { items } = useBeverages();
+  const [tooltipContent, setTooltipContent] = useState('');
 
   const countryCounts = useMemo(() => {
     const counts: Record<string, number> = {};
@@ -62,7 +63,14 @@ export default function WorldMapPage({ onSelectCountry }: { onSelectCountry: (c:
         Vos explorations gustatives à travers le monde. Toutes catégories confondues.
       </p>
 
-      <div className="glass-card" style={{ padding: 24 }}>
+      {/* Basic Tooltip at the top level or beside the map */}
+      {tooltipContent && (
+        <div style={{ position: 'absolute', top: '120px', right: '40px', background: 'rgba(28, 28, 30, 0.9)', padding: '12px 20px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)', color: 'white', fontWeight: 600, zIndex: 10, backdropFilter: 'blur(4px)', boxShadow: '0 8px 32px rgba(0,0,0,0.5)', pointerEvents: 'none' }}>
+          {tooltipContent}
+        </div>
+      )}
+
+      <div className="glass-card" style={{ padding: 24, position: 'relative' }}>
         {/* Top countries */}
         <div style={{ display: 'flex', gap: 12, marginBottom: 20, flexWrap: 'wrap' }}>
           {Object.entries(countryCounts).sort(([,a], [,b]) => b - a).slice(0, 10).map(([country, count]) => (
@@ -103,6 +111,12 @@ export default function WorldMapPage({ onSelectCountry }: { onSelectCountry: (c:
                       stroke="#2A2A2E"
                       strokeWidth={0.3}
                       onClick={() => count > 0 && onSelectCountry(name)}
+                      onMouseEnter={() => {
+                        if (count > 0) setTooltipContent(`${name}: ${count} références`);
+                      }}
+                      onMouseLeave={() => {
+                        setTooltipContent('');
+                      }}
                       style={{
                         default: { outline: 'none', transition: 'all 0.3s ease' },
                         hover: { fill: count > 0 ? '#E74C3C' : '#2A2A2E', outline: 'none', cursor: count > 0 ? 'pointer' : 'default', filter: count > 0 ? 'drop-shadow(0 0 8px rgba(192,57,43,0.4))' : 'none' },
